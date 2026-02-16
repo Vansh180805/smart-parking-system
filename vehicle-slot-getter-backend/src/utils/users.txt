@@ -1,0 +1,6 @@
+Total Users: 5
+- ID: 698f117448d2a450e663378c, Name: Admin User, Email: admin@example.com, Phone: 9999999999, Role: admin, Verified: true
+- ID: 698f117448d2a450e663378e, Name: Regular User, Email: user@example.com, Phone: 7777777777, Role: user, Verified: true
+- ID: 698f117448d2a450e663378d, Name: Staff Member, Email: staff@example.com, Phone: 8888888888, Role: staff, Verified: true
+- ID: 698f11aed9dc81d970d85461, Name: VANSH KAUSHIK, Email: vansh0993.be23@chitkara.edu.in, Phone: 8168092001, Role: user, Verified: false
+- ID: 698f12bfea6dbd1b4a425962, Name: Vansh Kaushik, Email: vanshkaushik380@gmail.com, Phone: 9876543210, Role: admin, Verified: true

@@ -1,0 +1,567 @@
+.user-parking {
+  min-height: 100vh;
+  background: #f9fafb;
+}
+
+[data-theme='dark'] .user-parking {
+  background: #111827;
+}
+
+.parking-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.parking-header h1 {
+  margin: 0 0 8px 0;
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.parking-header p {
+  margin: 0;
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+.parking-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+/* Error Banner */
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #ef4444;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  color: #991b1b;
+  font-weight: 500;
+}
+
+.error-banner button {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 0 4px;
+}
+
+.error-banner button:hover {
+  opacity: 0.7;
+}
+
+/* Step Container */
+.step-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 40px;
+  text-align: center;
+}
+
+[data-theme='dark'] .step-container {
+  background: #1f2937;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .step-container h2 {
+  color: #f3f4f6;
+}
+
+[data-theme='dark'] .step-container p {
+  color: #9ca3af;
+}
+
+.step-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.step-container h2 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.step-container p {
+  margin: 0 0 30px 0;
+  font-size: 16px;
+  color: #6b7280;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  gap: 16px;
+}
+
+.loading-spinner p {
+  margin: 0;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.step-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  gap: 20px;
+}
+
+.search-header-group {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.radius-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  padding: 6px 16px;
+  border-radius: 30px;
+  border: 1px solid #e5e7eb;
+}
+
+.radius-selector label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.radius-dropdown {
+  border: none;
+  background: none;
+  font-weight: 700;
+  color: #667eea;
+  cursor: pointer;
+  outline: none;
+  font-size: 14px;
+}
+
+.refresh-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.refresh-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Parking Grid */
+.parking-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.parking-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+[data-theme='dark'] .parking-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+[data-theme='dark'] .parking-name {
+  color: #f3f4f6;
+}
+
+[data-theme='dark'] .parking-info-row {
+  background: #111827;
+  color: #d1d5db;
+}
+
+[data-theme='dark'] .radius-selector {
+  background: #111827;
+  border-color: #374151;
+}
+
+[data-theme='dark'] .radius-selector label {
+  color: #9ca3af;
+}
+
+.parking-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.15);
+  transform: translateY(-4px);
+}
+
+.parking-card.selected {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-color: #667eea;
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.2);
+}
+
+.parking-card.selected::before {
+  content: '✓';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  background: #667eea;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.parking-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.parking-address {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.parking-info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.parking-distance {
+  font-size: 13px;
+  color: #667eea;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.select-btn {
+  width: 100%;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.select-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Booking Container */
+.booking-container {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 30px;
+  align-items: start;
+}
+
+.booking-sidebar {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 20px;
+}
+
+.booking-sidebar h3 {
+  margin: 0 0 24px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-control {
+  padding: 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: #f9fafb;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.parking-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.change-btn {
+  background: none;
+  border: none;
+  color: #667eea;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.change-btn:hover {
+  color: #764ba2;
+}
+
+/* Booking Summary */
+.booking-summary {
+  background: #f9fafb;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 24px 0;
+  border-left: 4px solid #667eea;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.summary-row:last-child {
+  margin-bottom: 0;
+}
+
+.summary-row span:last-child {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 2px solid white;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.summary-total span:first-child {
+  color: #374151;
+}
+
+.summary-total span:last-child {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Book Button */
+.book-btn {
+  width: 100%;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.book-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.book-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinner-small {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Slots Section */
+.slots-section {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.slots-section h3 {
+  margin: 0 0 24px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .booking-container {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .parking-header h1 {
+    font-size: 28px;
+  }
+
+  .parking-header p {
+    font-size: 14px;
+  }
+
+  .parking-container {
+    padding: 20px 15px;
+  }
+
+  .step-container {
+    padding: 30px 20px;
+  }
+
+  .step-controls {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .parking-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .parking-info-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 500px) {
+  .parking-header h1 {
+    font-size: 24px;
+  }
+
+  .parking-container {
+    padding: 15px 10px;
+  }
+
+  .step-container {
+    padding: 20px 15px;
+  }
+
+  .step-icon {
+    font-size: 48px;
+  }
+
+  .parking-card {
+    padding: 16px;
+  }
+
+  .booking-sidebar {
+    padding: 16px;
+  }
+
+  .booking-summary {
+    padding: 16px;
+  }
+}
