@@ -93,6 +93,13 @@ export const adminService = {
     api.get('/admin/fine-stats', { params: { startDate, endDate } }),
   getParkingPerformance: () => api.get('/admin/parking-performance'),
   getHourlyTrends: () => api.get('/admin/hourly-trends'),
+  getAllFeedback: () => api.get('/feedbacks/all'),
+  updateFeedbackStatus: (id, status) => api.put(`/feedbacks/${id}`, { status }),
+};
+
+// ===== FEEDBACK SERVICES =====
+export const feedbackService = {
+  submitFeedback: (data) => api.post('/feedbacks', data),
 };
 
 export default api;

@@ -30,6 +30,7 @@ const AdminDashboard = () => {
   const [hourlyTrends, setHourlyTrends] = useState([]);
   const [fineStats, setFineStats] = useState(null);
   const [parkingPerformance, setParkingPerformance] = useState([]);
+  const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -50,6 +51,7 @@ const AdminDashboard = () => {
         hourlyRes,
         fineRes,
         parkingRes,
+        feedbackRes,
       ] = await Promise.all([
         adminService.getDashboardSummary(),
         adminService.getVehicleStats(),
@@ -58,6 +60,7 @@ const AdminDashboard = () => {
         adminService.getHourlyTrends(),
         adminService.getFineStats(),
         adminService.getParkingPerformance(),
+        adminService.getAllFeedback(),
       ]);
 
       setSummary(summaryRes.data.data);
@@ -72,6 +75,7 @@ const AdminDashboard = () => {
       setHourlyTrends(hourlyRes.data.data);
       setFineStats(fineRes.data.data);
       setParkingPerformance(parkingRes.data.data);
+      setFeedbacks(feedbackRes.data.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch dashboard data');
       console.error('Dashboard error:', err);
@@ -171,48 +175,60 @@ const AdminDashboard = () => {
       <div className="charts-section">
         <div className="chart-container">
           <h3>🚙 Vehicle Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={vehicleStats}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percentage }) => `${name}: ${percentage}%`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="count"
-              >
-                {vehicleStats.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+          {vehicleStats.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={vehicleStats}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="count"
+                >
+                  {vehicleStats.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="no-data-placeholder">
+              <p>No bookings yet to show vehicle distribution</p>
+            </div>
+          )}
         </div>
 
         <div className="chart-container">
           <h3>💵 Revenue vs Fines</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={fineDistribution}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percentage }) => `${name}: ${percentage}%`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {fineDistribution.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
-            </PieChart>
-          </ResponsiveContainer>
+          {fineDistribution.some(d => d.value > 0) ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={fineDistribution}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {fineDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="no-data-placeholder">
+              <p>No revenue data generated yet</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -356,6 +372,54 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Support Feedbacks Section */}
+      <div className="charts-section">
+        <div className="chart-container full-width">
+          <h3>💬 User Support & Feedbacks</h3>
+          <div className="table-container">
+            <table className="performance-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Subject</th>
+                  <th>Rating</th>
+                  <th>Message</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {feedbacks.length === 0 ? (
+                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>No feedbacks yet</td></tr>
+                ) : feedbacks.map((fb) => (
+                  <tr key={fb._id}>
+                    <td>
+                      <div className="user-cell">
+                        <span className="user-name">{fb.name}</span>
+                        <span className="user-email">{fb.email}</span>
+                      </div>
+                    </td>
+                    <td>{fb.subject}</td>
+                    <td>
+                      <div className="rating-stars">
+                        {'★'.repeat(fb.rating)}{'☆'.repeat(5 - fb.rating)}
+                      </div>
+                    </td>
+                    <td className="message-cell">{fb.message}</td>
+                    <td>{new Date(fb.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <span className={`status-pill ${fb.status}`}>
+                        {fb.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

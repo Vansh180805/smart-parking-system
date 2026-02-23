@@ -48,8 +48,8 @@ exports.getDashboardSummary = async (req, res) => {
 
     // Today's stats
     const vehiclesParkedToday = await Booking.countDocuments({
-      bookingStatus: { $in: ['parked', 'completed'] },
-      parkedAt: { $gte: today },
+      bookingStatus: { $in: ['parked', 'confirmed', 'completed'] },
+      createdAt: { $gte: today },
     });
 
     return res.status(200).json({
@@ -83,7 +83,7 @@ exports.getVehicleStats = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
-    let matchQuery = { bookingStatus: 'completed' };
+    let matchQuery = { bookingStatus: { $in: ['confirmed', 'parked', 'completed'] } };
 
     if (startDate || endDate) {
       matchQuery.createdAt = {};

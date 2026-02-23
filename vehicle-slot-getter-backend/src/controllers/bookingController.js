@@ -15,32 +15,28 @@ const {
 // @access  Private
 exports.getNearestParking = async (req, res) => {
   try {
-    const { lat, lon, radius = 5 } = req.query;
+    const { lat, lon, radius } = req.query;
+    const searchRadius = parseFloat(radius) || 5;
 
-    if (!lat || !lon) {
-      return res.status(400).json({
-        success: false,
-        message: 'Latitude and longitude are required',
-      });
-    }
+    const allActiveLots = await ParkingLot.find({ isActive: true });
 
-    const parkingLots = await ParkingLot.find({ isActive: true });
+    const { findNearestParking, calculateDistance } = require('../utils/locationUtil');
 
-    console.log('🔍 Search params:', { lat, lon, radius });
-    console.log('📊 Total active parking lots in DB:', parkingLots.length);
+    // Calculate distance for all active lots
+    const lotsWithDistance = allActiveLots.map(lot => {
+      const doc = lot.toObject();
+      const [longitude, latitude] = lot.location.coordinates;
+      doc.distance = parseFloat(calculateDistance(
+        parseFloat(lat || 0),
+        parseFloat(lon || 0),
+        latitude,
+        longitude
+      ).toFixed(2));
+      return doc;
+    }).sort((a, b) => a.distance - b.distance);
 
-    const { findNearestParking } = require('../utils/locationUtil');
-    const nearbyParking = findNearestParking(
-      parkingLots,
-      parseFloat(lat),
-      parseFloat(lon),
-      parseFloat(radius)
-    );
-
-    console.log('✅ Nearby parking found:', nearbyParking.length);
-    if (nearbyParking.length > 0) {
-      console.log('📍 First parking:', nearbyParking[0].name, 'Distance:', nearbyParking[0].distance + 'km');
-    }
+    // Filter by radius
+    const nearbyParking = lotsWithDistance.filter(lot => lot.distance <= searchRadius);
 
     return res.status(200).json({
       success: true,
@@ -49,7 +45,7 @@ exports.getNearestParking = async (req, res) => {
     });
 
   } catch (error) {
-    console.log('Get nearest parking error:', error);
+    console.error('SEARCH ERROR:', error);
     return res.status(500).json({
       success: false,
       message: 'Server error',

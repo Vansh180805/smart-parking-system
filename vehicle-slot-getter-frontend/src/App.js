@@ -11,6 +11,9 @@ import Register from './pages/Auth/Register';
 import UserHome from './pages/User/UserHome';
 import UserParking from './pages/User/UserParking';
 import PaymentPage from './pages/User/PaymentPage';
+import BookingHistory from './pages/User/BookingHistory';
+import Profile from './pages/User/Profile';
+import Support from './pages/User/Support';
 
 // Admin Pages
 import AdminDashboard from './pages/Admin/AdminDashboard';
@@ -97,6 +100,30 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <UserHome />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bookings/history"
+        element={
+          <ProtectedRoute>
+            <BookingHistory />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/support"
+        element={
+          <ProtectedRoute>
+            <Support />
           </ProtectedRoute>
         }
       />

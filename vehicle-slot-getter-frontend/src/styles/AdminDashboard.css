@@ -70,6 +70,27 @@
   }
 }
 
+/* No Data Placeholder */
+.no-data-placeholder {
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
+  border: 2px dashed #e5e7eb;
+  color: #6b7280;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+.dark .no-data-placeholder {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: #374151;
+  color: #9ca3af;
+}
+
 /* KPI Cards */
 .kpi-cards {
   display: grid;
@@ -450,4 +471,68 @@
 
 [data-theme='dark'] .occupancy-bar {
   background: #4b5563;
+}
+
+/* Feedback Cell Styles */
+.user-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #111827;
+}
+
+.user-email {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.message-cell {
+  max-width: 300px;
+  white-space: normal;
+  line-height: 1.4;
+  color: #4b5563;
+}
+
+.rating-stars {
+  color: #fbbf24;
+  font-size: 16px;
+  letter-spacing: 2px;
+}
+
+.status-pill {
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-pill.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-pill.reviewed {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.status-pill.resolved {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+[data-theme='dark'] .user-name {
+  color: #f3f4f6;
+}
+
+[data-theme='dark'] .user-email {
+  color: #9ca3af;
+}
+
+[data-theme='dark'] .message-cell {
+  color: #d1d5db;
 }

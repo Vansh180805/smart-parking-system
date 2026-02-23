@@ -482,6 +482,7 @@
 }
 
 @media (max-width: 400px) {
+
   .auth-card,
   .auth-card.register-card {
     padding: 20px 15px;

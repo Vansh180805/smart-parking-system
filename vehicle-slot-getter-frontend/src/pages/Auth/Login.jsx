@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { authService } from '../../services/api';
 import '../../styles/Auth.css';
 
 const Login = () => {
@@ -37,10 +36,6 @@ const Login = () => {
     }
     if (!formData.password) {
       setError('Password is required');
-      return false;
-    }
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
       return false;
     }
     return true;

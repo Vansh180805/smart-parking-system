@@ -245,14 +245,30 @@ const UserParking = () => {
                   >
                     <option value={5}>5 km</option>
                     <option value={10}>10 km</option>
+                    <option value={15}>15 km</option>
                     <option value={20}>20 km</option>
-                    <option value={1000}>Anywhere (Test)</option>
+                    <option value={5000}>Anywhere (All India)</option>
                   </select>
                 </div>
               </div>
-              <button className="refresh-btn" onClick={() => getLocation(true)}>
-                🔄 Refresh
-              </button>
+              <div className="controls-group">
+                <button
+                  className="demo-loc-btn"
+                  onClick={() => {
+                    const coords = { latitude: 30.5158674, longitude: 76.6605828 };
+                    setUserCoords(coords);
+                    setStep('parking');
+                    setRadius(5000); // Set dropdown to Anywhere
+                    fetchNearbyParking(coords, 5000);
+                  }}
+                  title="Use fixed location if GPS fails"
+                >
+                  📍 Use Demo Location
+                </button>
+                <button className="refresh-btn" onClick={() => getLocation(true)}>
+                  🔄 Refresh
+                </button>
+              </div>
             </div>
 
             {loading ? (
@@ -280,9 +296,7 @@ const UserParking = () => {
                       <span>📏 {parking.totalSlots} slots</span>
                       <span>💰 ₹{parking.hourlyRate}/hr</span>
                     </div>
-                    <div className="parking-distance">
-                      📍 {parking.distance?.toFixed(2)} km away
-                    </div>
+
                     <button className="select-btn">Select Parking →</button>
                   </div>
                 ))}
