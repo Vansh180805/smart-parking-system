@@ -6,7 +6,7 @@ import '../../styles/Auth.css';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { login, register, verifyOTP } = useAuth();
+  const { register, verifyOTP } = useAuth();
 
   const [step, setStep] = useState(1); // 1: Form, 2: OTP Verification
   const [loading, setLoading] = useState(false);

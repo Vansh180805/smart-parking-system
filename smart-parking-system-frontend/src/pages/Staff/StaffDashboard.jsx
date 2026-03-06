@@ -218,9 +218,6 @@ const StaffDashboard = () => {
     }
   };
 
-  const handleQRScan = async (e) => {
-    await handleLookupBooking(e);
-  };
 
   const handleLogout = () => {
     logout();
