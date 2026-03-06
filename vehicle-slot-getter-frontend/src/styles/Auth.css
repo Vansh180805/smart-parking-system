@@ -260,28 +260,38 @@
   text-decoration: none;
 }
 
-.change-email-btn {
-  margin-top: 12px;
-  padding: 10px 16px;
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  color: #374151;
-  cursor: pointer;
-  font-weight: 600;
+.otp-help-text {
   font-size: 13px;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: #6b7280;
+  margin-top: 8px;
+  line-height: 1.5;
 }
 
-.change-email-btn:hover:not(:disabled) {
-  border-color: #667eea;
+.otp-help-text strong {
   color: #667eea;
-  background: #f0f4ff;
 }
 
-.change-email-btn:disabled {
+.back-button {
+  margin-top: 10px;
+  padding: 10px;
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.back-button:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.back-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

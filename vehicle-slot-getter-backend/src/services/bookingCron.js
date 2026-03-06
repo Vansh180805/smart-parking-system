@@ -9,32 +9,60 @@ const ParkingLot = require('../models/ParkingLot');
 const startBookingCron = () => {
     // Run every 5 minutes
     cron.schedule('*/5 * * * *', async () => {
-        console.log('Running Cron: Checking for overdue bookings...');
+        console.log('Running Cron: Checking for overdue and expired bookings...');
         try {
             const now = new Date();
 
-            // Find bookings that have passed their endTime but are not yet completed or cancelled
+            // 1. Handle Overdue Bookings (Confirmed/Parked) -> Add Fine
             const overdueBookings = await Booking.find({
                 endTime: { $lt: now },
-                bookingStatus: { $in: ['confirmed', 'parked', 'pending'] },
+                bookingStatus: { $in: ['confirmed', 'parked'] },
                 finePaid: false
             }).populate('parkingId');
 
             for (const booking of overdueBookings) {
                 const diffMs = now - booking.endTime;
-                const extraHours = Math.ceil(diffMs / (1000 * 60 * 60)); // Round up to nearest hour
+                const extraHours = Math.ceil(diffMs / (1000 * 60 * 60));
 
                 if (extraHours > 0) {
-                    const hourlyRate = booking.parkingId.hourlyRate || 50; // Fallback to 50 if rate not found
+                    const hourlyRate = booking.parkingId?.hourlyRate || 50;
                     const fine = extraHours * hourlyRate * 1.5;
 
                     booking.fineAmount = fine;
                     booking.bookingStatus = 'overdue';
                     await booking.save();
-
-                    console.log(`Updated booking ${booking.bookingId} with fine: ₹${fine}`);
+                    console.log(`📑 Updated booking ${booking.bookingId} with fine: ₹${fine}`);
                 }
             }
+
+            // 2. Handle Expired Pending Bookings (Never paid) -> Cancel
+            // If its already past endTime and still pending, cancel it.
+            const expiredPending = await Booking.find({
+                endTime: { $lt: now },
+                bookingStatus: 'pending'
+            });
+
+            for (const b of expiredPending) {
+                b.bookingStatus = 'cancelled';
+                b.notes = 'System cancelled: Payment not completed before end time.';
+                await b.save();
+                console.log(`🚫 Cancelled expired pending booking: ${b.bookingId}`);
+            }
+
+            // 3. Optional: Cancel pending bookings older than 30 minutes (even if endTime not reached)
+            const thirtyMinsAgo = new Date(now.getTime() - 30 * 60 * 1000);
+            const stalePending = await Booking.find({
+                createdAt: { $lt: thirtyMinsAgo },
+                bookingStatus: 'pending'
+            });
+
+            for (const b of stalePending) {
+                b.bookingStatus = 'cancelled';
+                b.notes = 'System cancelled: Payment timeout.';
+                await b.save();
+                console.log(`⌛ Cancelled stale pending booking: ${b.bookingId}`);
+            }
+
         } catch (error) {
             console.error('Error in Booking Cron Job:', error);
         }

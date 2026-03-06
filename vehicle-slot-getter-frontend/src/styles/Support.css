@@ -4,6 +4,18 @@
     background: #f8fafc;
 }
 
+[data-theme='dark'] .support-page {
+    background: #111827;
+}
+
+[data-theme='dark'] .support-header h2 {
+    color: #f3f4f6;
+}
+
+[data-theme='dark'] .support-header p {
+    color: #9ca3af;
+}
+
 .support-header {
     max-width: 600px;
     margin: 0 auto 30px;
@@ -23,6 +35,12 @@
     box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.05);
 }
 
+[data-theme='dark'] .support-form,
+[data-theme='dark'] .success-card {
+    background: #1f2937;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
 .rating-section {
     text-align: center;
     margin-bottom: 30px;
@@ -33,6 +51,25 @@
     font-weight: 600;
     color: #475569;
     margin-bottom: 10px;
+}
+
+[data-theme='dark'] .rating-section label {
+    color: #9ca3af;
+}
+
+[data-theme='dark'] .form-group textarea {
+    background: #111827;
+    border-color: #374151;
+    color: #f3f4f6;
+}
+
+[data-theme='dark'] .success-card p {
+    color: #9ca3af;
+}
+
+[data-theme='dark'] .success-card button {
+    background: #111827;
+    color: #f3f4f6;
 }
 
 .stars {

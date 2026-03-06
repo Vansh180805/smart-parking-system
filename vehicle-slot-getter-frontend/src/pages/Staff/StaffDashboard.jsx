@@ -14,6 +14,7 @@ const StaffDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [qrInput, setQrInput] = useState('');
+  const [lookupResult, setLookupResult] = useState(null);
   const [verificationResult, setVerificationResult] = useState(null);
 
   const loadData = useCallback(async () => {
@@ -47,7 +48,7 @@ const StaffDashboard = () => {
   const fetchPendingEntries = async () => {
     try {
       setLoading(true);
-      const response = await staffService.getPendingEntries(1, 50);
+      const response = await staffService.getPendingEntries(null, 1, 50);
       console.log('📋 Staff Pending Response:', response);
       if (response.data.success) {
         setPendingEntries(response.data.data?.bookings || []);
@@ -65,7 +66,7 @@ const StaffDashboard = () => {
   const fetchParkedVehicles = async () => {
     try {
       setLoading(true);
-      const response = await staffService.getParkedVehicles(1, 50);
+      const response = await staffService.getParkedVehicles(null, 1, 50);
       console.log('🅿️ Staff Parked Response:', response);
       if (response.data.success) {
         setParkedVehicles(response.data.data?.bookings || []);
@@ -154,7 +155,7 @@ const StaffDashboard = () => {
     }
   };
 
-  const handleQRScan = async (e) => {
+  const handleLookupBooking = async (e) => {
     e.preventDefault();
     if (!qrInput.trim()) {
       setError('Please scan a QR code');
@@ -162,28 +163,63 @@ const StaffDashboard = () => {
     }
 
     try {
-      // Extract booking ID from QR code data
-      const bookingId = qrInput.match(/bookingId:([^,]+)/)?.[1] || qrInput;
+      setLoading(true);
+      setError('');
+      setLookupResult(null);
+      setVerificationResult(null);
 
-      const pendingEntry = pendingEntries.find(e => e._id === bookingId);
-      if (!pendingEntry) {
-        setVerificationResult({
-          success: false,
-          message: 'Booking not found or already verified',
-        });
-        setQrInput('');
-        return;
+      // Extract booking ID or use raw ID
+      let bookingId = qrInput;
+      try {
+        const parsed = JSON.parse(qrInput);
+        bookingId = parsed.bookingId || qrInput;
+      } catch (e) {
+        // Not JSON, try regex match for 'bookingId:xxxx'
+        const match = qrInput.match(/bookingId:["']?([^,"'}]+)/);
+        if (match) bookingId = match[1];
       }
 
-      await handleVerifyParking(bookingId);
-      setQrInput('');
+      const response = await staffService.getBookingDetails(bookingId);
+      if (response.data.success) {
+        setLookupResult(response.data.data);
+      } else {
+        setError('Booking not found or invalid QR');
+      }
     } catch (err) {
-      setVerificationResult({
-        success: false,
-        message: 'Invalid QR code',
-      });
-      setQrInput('');
+      setError('Invalid QR code format');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleConfirmEntry = async () => {
+    if (!lookupResult) return;
+    try {
+      setLoading(true);
+      const response = await staffService.verifyParking({
+        bookingId: lookupResult._id,
+        parkingId: lookupResult.parkingId?._id || lookupResult.parkingId,
+        slotId: lookupResult.slotId?._id || lookupResult.slotId,
+      });
+
+      if (response.data.success) {
+        setVerificationResult({
+          success: true,
+          message: `Entry Granted! Vehicle ${lookupResult.vehicleNumber} parked in ${lookupResult.slotId?.slotNumber || 'slot'}.`,
+        });
+        setLookupResult(null);
+        setQrInput('');
+        fetchPendingEntries();
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Verification failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQRScan = async (e) => {
+    await handleLookupBooking(e);
   };
 
   const handleLogout = () => {
@@ -252,31 +288,103 @@ const StaffDashboard = () => {
         {tab === 'verify' && (
           <div className="verify-section">
             <div className="qr-scanner">
-              <div className="qr-icon">📱</div>
-              <h2>Scan Booking QR Code</h2>
-              <p>Scan the QR code from the booking confirmation to verify entry</p>
+              <div className="qr-icon">🔐</div>
+              <h2>Scan Booking QR</h2>
+              <p>Paste the QR data string to lookup booking</p>
 
-              <form onSubmit={handleQRScan} className="qr-form">
+              <form className="qr-form" onSubmit={handleLookupBooking} style={{ display: 'flex', gap: '12px', maxWidth: '500px', margin: '0 auto 30px' }}>
                 <input
                   type="text"
+                  className="qr-input"
+                  placeholder="Paste QR data here..."
                   value={qrInput}
                   onChange={(e) => setQrInput(e.target.value)}
-                  placeholder="QR code will appear here"
-                  autoFocus
-                  className="qr-input"
+                  disabled={loading}
+                  style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
                 />
-                <button type="submit" className="scan-btn" disabled={loading}>
-                  {loading ? 'Processing...' : 'Process QR Code'}
+                <button type="submit" className="scan-btn" disabled={loading || !qrInput} style={{ padding: '12px 24px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+                  {loading ? 'Searching...' : 'Lookup'}
                 </button>
               </form>
 
+              {lookupResult && (
+                <div className="lookup-preview-card" style={{
+                  background: '#f0f9ff',
+                  border: '2px solid #0ea5e9',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  maxWidth: '600px',
+                  margin: '0 auto 30px',
+                  textAlign: 'left',
+                  boxShadow: '0 10px 25px rgba(14,165,233, 0.15)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <h3 style={{ color: '#0369a1', margin: 0 }}>Booking Details Found! ✅</h3>
+                    <span style={{
+                      padding: '4px 12px',
+                      background: '#e0f2fe',
+                      color: '#0369a1',
+                      borderRadius: '20px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700
+                    }}>{lookupResult.bookingStatus.toUpperCase()}</span>
+                  </div>
+
+                  <div className="preview-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <div className="preview-item">
+                      <label style={{ color: '#64748b', fontSize: '0.8rem', display: 'block', fontWeight: 600 }}>USER</label>
+                      <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>{lookupResult.userId?.name}</span>
+                    </div>
+                    <div className="preview-item">
+                      <label style={{ color: '#64748b', fontSize: '0.8rem', display: 'block', fontWeight: 600 }}>VEHICLE NUMBER</label>
+                      <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1e293b' }}>{lookupResult.vehicleNumber}</span>
+                    </div>
+                    <div className="preview-item">
+                      <label style={{ color: '#64748b', fontSize: '0.8rem', display: 'block', fontWeight: 600 }}>ASSIGNED SLOT</label>
+                      <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#0369a1' }}>{lookupResult.slotId?.slotNumber}</span>
+                    </div>
+                    <div className="preview-item">
+                      <label style={{ color: '#64748b', fontSize: '0.8rem', display: 'block', fontWeight: 600 }}>VEHICLE TYPE</label>
+                      <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>{lookupResult.vehicleType}</span>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '25px', paddingTop: '20px', borderTop: '1px dashed #bae6fd' }}>
+                    {lookupResult.bookingStatus === 'confirmed' ? (
+                      <button
+                        onClick={handleConfirmEntry}
+                        className="confirm-park-btn"
+                        style={{
+                          width: '100%',
+                          padding: '16px',
+                          background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontWeight: 800,
+                          fontSize: '1rem',
+                          cursor: 'pointer',
+                          boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+                        }}
+                      >
+                        🚀 ALLOW ENTRY & MARK PARKED
+                      </button>
+                    ) : (
+                      <div style={{ color: '#dc2626', fontWeight: 700, textAlign: 'center' }}>
+                        ⚠️ This vehicle is already marked as {lookupResult.bookingStatus}.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="qr-instructions">
-                <h4>Instructions:</h4>
+                <h4>Safety Check:</h4>
                 <ol>
                   <li>Ask customer for booking confirmation QR code</li>
-                  <li>Scan the QR code using your device camera</li>
-                  <li>System will automatically verify the entry</li>
-                  <li>Confirm vehicle details and allow entry</li>
+                  <li>Scan or paste the QR data string to verify details</li>
+                  <li>Confirm vehicle number matches physical plate</li>
+                  <li>Click 'Allow Entry' to mark slot as occupied</li>
                 </ol>
               </div>
             </div>

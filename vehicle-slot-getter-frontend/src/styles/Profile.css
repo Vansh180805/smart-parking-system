@@ -4,6 +4,18 @@
     background: #f8fafc;
 }
 
+[data-theme='dark'] .profile-page {
+    background: #111827;
+}
+
+[data-theme='dark'] .profile-header h2 {
+    color: #f3f4f6;
+}
+
+[data-theme='dark'] .profile-header p {
+    color: #9ca3af;
+}
+
 .profile-header {
     max-width: 600px;
     margin: 0 auto 30px;
@@ -21,6 +33,11 @@
     padding: 40px;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
     text-align: center;
+}
+
+[data-theme='dark'] .profile-card {
+    background: #1f2937;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .profile-avatar {
@@ -52,6 +69,25 @@
     font-weight: 600;
     color: #64748b;
     margin-bottom: 6px;
+}
+
+[data-theme='dark'] .form-group label {
+    color: #9ca3af;
+}
+
+[data-theme='dark'] .form-group input {
+    background: #111827;
+    border-color: #374151;
+    color: #f3f4f6;
+}
+
+[data-theme='dark'] .form-group input:focus {
+    background: #111827;
+}
+
+[data-theme='dark'] .form-group input:disabled {
+    background: #1f2937;
+    color: #4b5563;
 }
 
 .form-group input {

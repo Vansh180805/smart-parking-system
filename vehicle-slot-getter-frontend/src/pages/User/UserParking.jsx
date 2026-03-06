@@ -6,10 +6,10 @@ import SlotGrid from '../../components/SlotGrid';
 import '../../styles/UserParking.css';
 
 const VEHICLE_TYPES = [
-  { value: 'twoWheeler', label: '🏍️ Two Wheeler', rate: '₹20' },
-  { value: 'threeWheeler', label: '🛺 Three Wheeler', rate: '₹40' },
-  { value: 'fourWheeler', label: '🚗 Four Wheeler', rate: '₹60' },
-  { value: 'heavyVehicle', label: '🚚 Heavy Vehicle', rate: '₹100' },
+  { value: 'twoWheeler', label: '🏍️ Two Wheeler' },
+  { value: 'threeWheeler', label: '🛺 Three Wheeler' },
+  { value: 'fourWheeler', label: '🚗 Four Wheeler' },
+  { value: 'heavyVehicle', label: '🚚 Heavy Vehicle' },
 ];
 
 const UserParking = () => {
@@ -25,9 +25,10 @@ const UserParking = () => {
   const [vehicleType, setVehicleType] = useState('fourWheeler');
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [startTime, setStartTime] = useState('');
-  const [hours, setHours] = useState('1');
+  const [duration, setDuration] = useState('1');
+  const [durationUnit, setDurationUnit] = useState('hours');
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [radius, setRadius] = useState(5);
+  const [radius, setRadius] = useState(5000); // Default to Anywhere (All India)
   const [userCoords, setUserCoords] = useState(null);
 
   // UI
@@ -132,11 +133,17 @@ const UserParking = () => {
 
   // 3. Amount calculation
   useEffect(() => {
-    if (selectedParking && hours) {
+    if (selectedParking && duration) {
       const rate = selectedParking.hourlyRate || 60;
-      setBookingAmount(rate * parseInt(hours));
+      if (durationUnit === 'hours') {
+        setBookingAmount(rate * parseFloat(duration));
+      } else {
+        // Minimum amount for minutes or pro-rated
+        const minAmount = Math.ceil((rate / 60) * parseInt(duration));
+        setBookingAmount(Math.max(minAmount, 10)); // Min ₹10 charge
+      }
     }
-  }, [selectedParking, hours]);
+  }, [selectedParking, duration, durationUnit]);
 
 
   // ================= HANDLERS =================
@@ -179,13 +186,17 @@ const UserParking = () => {
 
     try {
       setLoading(true);
+      const durationMs = durationUnit === 'hours'
+        ? parseFloat(duration) * 3600000
+        : parseInt(duration) * 60000;
+
       const bookingData = {
         parkingId: selectedParking._id,
-        slotId: selectedSlot._id,
+        slotId: selectedSlot.id,
         vehicleType,
         vehicleNumber: vehicleNumber.toUpperCase(),
         startTime: new Date(startTime).toISOString(),
-        endTime: new Date(new Date(startTime).getTime() + hours * 3600000).toISOString(),
+        endTime: new Date(new Date(startTime).getTime() + durationMs).toISOString(),
         bookingAmount,
       };
 
@@ -196,7 +207,8 @@ const UserParking = () => {
       }
     } catch (err) {
       console.error('Booking failed:', err);
-      setError('Booking failed.');
+      const msg = err.response?.data?.message || 'Booking failed.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -258,7 +270,7 @@ const UserParking = () => {
                     const coords = { latitude: 30.5158674, longitude: 76.6605828 };
                     setUserCoords(coords);
                     setStep('parking');
-                    setRadius(5000); // Set dropdown to Anywhere
+                    setRadius(5000); // Set dropdown to Anywhere (All India)
                     fetchNearbyParking(coords, 5000);
                   }}
                   title="Use fixed location if GPS fails"
@@ -279,8 +291,27 @@ const UserParking = () => {
             ) : parkingLots.length === 0 ? (
               <div className="empty-state">
                 <div className="empty-icon">🚫</div>
-                <h3>No Parking Found</h3>
-                <p>Try increasing the search radius or check your GPS.</p>
+                <h3>No Parking Found Nearby</h3>
+                <p>We couldn't find anything within {radius} km. Try searching across all areas.</p>
+                <button
+                  className="global-search-btn"
+                  onClick={() => {
+                    setRadius(5000);
+                    if (userCoords) fetchNearbyParking(userCoords, 5000);
+                  }}
+                  style={{
+                    marginTop: '15px',
+                    padding: '10px 20px',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: '600'
+                  }}
+                >
+                  🔍 Search Anywhere (All India)
+                </button>
               </div>
             ) : (
               <div className="parking-grid">
@@ -359,15 +390,26 @@ const UserParking = () => {
               </div>
 
               <div className="form-group">
-                <label>Duration (Hours)</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="24"
-                  value={hours}
-                  onChange={(e) => setHours(e.target.value)}
-                  className="form-control"
-                />
+                <label>Duration</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="number"
+                    min="1"
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                    className="form-control"
+                    style={{ flex: 1 }}
+                  />
+                  <select
+                    value={durationUnit}
+                    onChange={(e) => setDurationUnit(e.target.value)}
+                    className="form-control"
+                    style={{ width: '100px' }}
+                  >
+                    <option value="hours">Hours</option>
+                    <option value="minutes">Mins</option>
+                  </select>
+                </div>
               </div>
 
               <div className="booking-summary">

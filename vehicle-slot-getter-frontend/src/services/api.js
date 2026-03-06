@@ -40,6 +40,7 @@ export const authService = {
   verifyOTP: (data) => api.post('/auth/verify-otp', data),
   resendOTP: (data) => api.post('/auth/resend-otp', data),
   login: (data) => api.post('/auth/login', data),
+  verifyLoginOTP: (data) => api.post('/auth/login-verify', data),
   getMe: () => api.get('/auth/me'),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   resetPassword: (data) => api.post('/auth/reset-password', data),
@@ -67,6 +68,7 @@ export const bookingService = {
     api.get('/bookings/my-bookings', { params: { status, page, limit } }),
   cancelBooking: (bookingId) => api.post(`/bookings/${bookingId}/cancel`),
   checkOverstay: (bookingId) => api.get(`/bookings/${bookingId}/check-overstay`),
+  exitParking: (bookingId) => api.post(`/bookings/${bookingId}/exit`),
   createPaymentOrder: (bookingId, type = 'BOOKING') => api.post('/payments/create-order', { bookingId, type }),
   verifyPayment: (paymentData) => api.post('/payments/verify', paymentData),
 };
@@ -100,6 +102,7 @@ export const adminService = {
 // ===== FEEDBACK SERVICES =====
 export const feedbackService = {
   submitFeedback: (data) => api.post('/feedbacks', data),
+  updateFeedbackStatus: (id, status) => api.put(`/feedbacks/${id}`, { status }),
 };
 
 export default api;

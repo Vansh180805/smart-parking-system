@@ -16,10 +16,14 @@ const sendEmail = async ({ to, subject, html }) => {
       subject,
       html,
     };
+
+    console.log(`📧 [EMAIL_SERVICE]: Sending ${subject} to: ${to}`);
     const result = await transporter.sendMail(mailOptions);
+    console.log(`✅ [EMAIL_SERVICE]: Email sent successfully to: ${to}`);
+
     return { success: true, result };
   } catch (error) {
-    console.error('Email sending error:', error);
+    console.error('❌ [EMAIL_SERVICE]: Email sending error:', error);
     return { success: false, error: error.message };
   }
 };
@@ -37,7 +41,7 @@ const sendOTPEmail = async (email, otp) => {
       <p style="color: #666; font-size: 12px;">Smart Vehicle Parking System</p>
     </div>
   `;
-  
+
   return sendEmail({
     to: email,
     subject: 'Email Verification OTP',
@@ -86,7 +90,7 @@ const sendBookingConfirmation = async (booking, user, parking, slot) => {
       </p>
     </div>
   `;
-  
+
   return sendEmail({
     to: user.email,
     subject: 'Parking Slot Booked Successfully - ' + booking.bookingId,
@@ -97,31 +101,34 @@ const sendBookingConfirmation = async (booking, user, parking, slot) => {
 // Send parking confirmation email
 const sendParkingConfirmation = async (booking, user, parking, slot) => {
   const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2>You're Parked! 🎉</h2>
-      <p>Hi <strong>${user.name}</strong>,</p>
-      <p>Your vehicle has been successfully parked at our facility.</p>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; color: white;">
+        <h1 style="margin: 0; font-size: 24px;">Vehicle Parked Successfully! 🚗✅</h1>
+      </div>
       
-      <div style="background-color: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0;">
-        <p><strong>Parking Location:</strong> ${parking.name}</p>
-        <p><strong>Slot Number:</strong> ${slot.slotNumber}</p>
-        <p><strong>Vehicle Number:</strong> ${booking.vehicleNumber}</p>
-        <p><strong>Parked At:</strong> ${new Date(booking.parkedAt).toLocaleTimeString()}</p>
-        <p><strong>Expected Check-out:</strong> ${new Date(booking.endTime).toLocaleTimeString()}</p>
+      <div style="padding: 30px; color: #374151;">
+        <p>Hi <strong>${user.name}</strong>,</p>
+        <p style="font-size: 16px; line-height: 1.6;">Good news! Your vehicle <strong>${booking.vehicleNumber}</strong> has <strong>arrived and parked successfully</strong> at ${parking.name}.</p>
+        
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
+          <p style="margin: 5px 0;"><strong>Slot Number:</strong> <span style="color: #6366f1; font-weight: bold;">${slot.slotNumber}</span></p>
+          <p style="margin: 5px 0;"><strong>Arrival Time:</strong> ${new Date(booking.parkedAt).toLocaleTimeString()}</p>
+          <p style="margin: 5px 0;"><strong>Valid Until:</strong> ${new Date(booking.endTime).toLocaleTimeString()}</p>
+        </div>
+
+        <p style="color: #059669; font-weight: 600;">✓ Entry verified by our onsite staff.</p>
+        <p>We'll notify you 15 minutes before your time expires to avoid any fines.</p>
       </div>
 
-      <p style="color: #28a745;"><strong>✓ Entry verified and confirmed.</strong></p>
-
-      <hr style="margin: 30px 0;">
-      <p style="color: #666; font-size: 12px;">
-        Safe parking! Smart Vehicle Parking System
-      </p>
+      <div style="background-color: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 12px; border-top: 1px solid #e5e7eb;">
+        Smart Vehicle Parking System • Safe & Secure
+      </div>
     </div>
   `;
-  
+
   return sendEmail({
     to: user.email,
-    subject: 'Parking Confirmed - ' + booking.bookingId,
+    subject: `Arrival Confirmed! Your vehicle is parked - ${booking.vehicleNumber}`,
     html,
   });
 };
@@ -150,7 +157,7 @@ const sendOverstayNotification = async (booking, user, parking, fineAmount) => {
       </p>
     </div>
   `;
-  
+
   return sendEmail({
     to: user.email,
     subject: 'Overstay Fine Notice - ' + booking.bookingId,
@@ -173,7 +180,7 @@ const sendPasswordResetOTP = async (email, otp) => {
       <p style="color: #666; font-size: 12px;">Smart Vehicle Parking System</p>
     </div>
   `;
-  
+
   return sendEmail({
     to: email,
     subject: 'Password Reset OTP',
@@ -188,4 +195,4 @@ module.exports = {
   sendParkingConfirmation,
   sendOverstayNotification,
   sendPasswordResetOTP,
-};module.exports = sendEmail;
+};

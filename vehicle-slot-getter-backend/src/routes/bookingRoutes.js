@@ -27,4 +27,7 @@ router.post('/:bookingId/cancel', bookingController.cancelBooking);
 // Check overstay
 router.get('/:bookingId/check-overstay', bookingController.checkOverstay);
 
+// Exit parking
+router.post('/:bookingId/exit', bookingController.processExit);
+
 module.exports = router;

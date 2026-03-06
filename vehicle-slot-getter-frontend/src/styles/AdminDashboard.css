@@ -502,29 +502,6 @@
   letter-spacing: 2px;
 }
 
-.status-pill {
-  padding: 4px 10px;
-  border-radius: 99px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.status-pill.pending {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.status-pill.reviewed {
-  background: #e0f2fe;
-  color: #0369a1;
-}
-
-.status-pill.resolved {
-  background: #dcfce7;
-  color: #15803d;
-}
-
 [data-theme='dark'] .user-name {
   color: #f3f4f6;
 }

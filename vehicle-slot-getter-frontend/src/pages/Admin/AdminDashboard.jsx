@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   PieChart,
   Pie,
@@ -14,12 +15,13 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import { adminService } from '../../services/api';
+import { adminService, feedbackService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import '../../styles/AdminDashboard.css';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const { logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [summary, setSummary] = useState(null);
@@ -108,6 +110,25 @@ const AdminDashboard = () => {
       <div className="dashboard-header">
         <h1>📊 Admin Dashboard</h1>
         <div className="header-actions">
+          <button
+            className="switch-btn"
+            onClick={() => navigate('/staff/dashboard')}
+            style={{
+              padding: '10px 18px',
+              backgroundColor: '#6366f1',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            👮 Staff Panel
+          </button>
           <button className="theme-toggle-btn" onClick={toggleTheme} title="Toggle Theme">
             {theme === 'light' ? '🌙' : '☀️'}
           </button>
@@ -334,7 +355,7 @@ const AdminDashboard = () => {
                       </div>
                       <span>{parking.occupancyRate}%</span>
                     </td>
-                    <td>{parking.completedBookings}</td>
+                    <td>{parking.totalBookings}</td>
                     <td>₹{parking.revenue.toLocaleString()}</td>
                   </tr>
                 ))}
@@ -386,12 +407,11 @@ const AdminDashboard = () => {
                   <th>Rating</th>
                   <th>Message</th>
                   <th>Date</th>
-                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {feedbacks.length === 0 ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>No feedbacks yet</td></tr>
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>No feedbacks yet</td></tr>
                 ) : feedbacks.map((fb) => (
                   <tr key={fb._id}>
                     <td>
@@ -408,11 +428,6 @@ const AdminDashboard = () => {
                     </td>
                     <td className="message-cell">{fb.message}</td>
                     <td>{new Date(fb.createdAt).toLocaleDateString()}</td>
-                    <td>
-                      <span className={`status-pill ${fb.status}`}>
-                        {fb.status}
-                      </span>
-                    </td>
                   </tr>
                 ))}
               </tbody>

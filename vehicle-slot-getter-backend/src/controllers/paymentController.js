@@ -40,10 +40,13 @@ exports.createOrder = async (req, res) => {
             });
         }
 
+        const amountInPaise = Math.round(amount * 100);
+        console.log(`💰 Generating order for Booking: ${bookingId}, Amount: ₹${amount} (${amountInPaise} paise)`);
+
         const options = {
-            amount: Math.round(amount * 100), // amount in smallest currency unit (paise)
+            amount: amountInPaise,
             currency: 'INR',
-            receipt: `receipt_${booking._id}_${Date.now()}`,
+            receipt: `receipt_${booking._id.toString().slice(-6)}_${Date.now()}`,
             notes: {
                 bookingId: booking._id.toString(),
                 type: type
@@ -51,6 +54,7 @@ exports.createOrder = async (req, res) => {
         };
 
         const order = await razorpay.orders.create(options);
+        console.log('✅ Razorpay Order Created:', order.id);
 
         // Save order ID to booking for verification
         booking.razorpayOrderId = order.id;
@@ -66,10 +70,10 @@ exports.createOrder = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Create Razorpay Order Error:', error);
+        console.error('❌ Create Razorpay Order Error:', error);
         return res.status(500).json({
             success: false,
-            message: 'Failed to create payment order',
+            message: error.description || 'Failed to create payment order',
             error: error.message,
         });
     }
@@ -123,7 +127,7 @@ exports.verifyPayment = async (req, res) => {
                 }
             } else {
                 // Update Booking for Initial Payment
-                booking.paymentStatus = 'paid';
+                booking.paymentStatus = 'completed';
                 booking.bookingStatus = 'confirmed';
                 amountPaid = booking.bookingAmount;
 
@@ -138,7 +142,12 @@ exports.verifyPayment = async (req, res) => {
                 // Send Confirmation Email (Nodemailer)
                 try {
                     const { sendBookingConfirmation } = require('../utils/emailSender');
-                    await sendBookingConfirmation(booking, booking.userId, booking.parkingId, booking.slotId);
+                    // Fetch user and parking for email
+                    const User = require('../models/User');
+                    const ParkingLot = require('../models/ParkingLot');
+                    const user = await User.findById(booking.userId);
+                    const parking = await ParkingLot.findById(booking.parkingId);
+                    await sendBookingConfirmation(booking, user, parking, slot);
                 } catch (emailError) {
                     console.error('Failed to send confirmation email:', emailError);
                 }

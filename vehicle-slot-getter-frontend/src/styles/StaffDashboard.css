@@ -573,3 +573,34 @@
     padding: 40px 20px;
   }
 }
+
+/* Lookup Preview Styles */
+.lookup-preview-card {
+  animation: scaleUp 0.3s ease;
+}
+
+@keyframes scaleUp {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.confirm-park-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.confirm-park-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.4) !important;
+  filter: brightness(1.1);
+}
+
+.confirm-park-btn:active {
+  transform: translateY(-1px);
+}

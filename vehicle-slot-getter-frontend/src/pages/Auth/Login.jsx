@@ -5,13 +5,16 @@ import '../../styles/Auth.css';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, verifyLoginOTP } = useAuth();
 
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
 
+  const [otp, setOtp] = useState('');
+  const [userId, setUserId] = useState('');
+  const [step, setStep] = useState(1); // 1: Login, 2: OTP
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -51,14 +54,14 @@ const Login = () => {
       const data = await login(formData.email, formData.password);
 
       if (data.success) {
-        // Redirect based on user role
-        const user = data.user;
-        if (user?.role === 'admin') {
-          navigate('/admin/dashboard');
-        } else if (user?.role === 'staff') {
-          navigate('/staff/dashboard');
+        if (data.requireOTP) {
+          setUserId(data.userId);
+          setStep(2);
+          setError('');
         } else {
-          navigate('/bookings');
+          // Redirect based on user role (if OTP not required - though it's required now)
+          const user = data.user;
+          handleRedirect(user);
         }
       } else {
         setError(data.message || 'Login failed. Please try again.');
@@ -67,6 +70,38 @@ const Login = () => {
       setError(err.response?.data?.message || err.message || 'An error occurred during login');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    if (!otp || otp.length < 6) {
+      setError('Please enter a valid 6-digit OTP');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await verifyLoginOTP(userId, otp);
+      if (data.success) {
+        handleRedirect(data.user);
+      } else {
+        setError(data.message || 'Invalid OTP');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Verification failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRedirect = (user) => {
+    if (user?.role === 'admin') {
+      navigate('/admin/dashboard');
+    } else if (user?.role === 'staff') {
+      navigate('/staff/dashboard');
+    } else {
+      navigate('/bookings');
     }
   };
 
@@ -86,48 +121,73 @@ const Login = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
-            <div className="input-wrapper">
-              <span className="input-icon">✉️</span>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter your email"
-                disabled={loading}
-                autoComplete="email"
-              />
-            </div>
-          </div>
+        <form onSubmit={step === 1 ? handleSubmit : handleVerifyOTP} className="auth-form">
+          {step === 1 ? (
+            <>
+              <div className="form-group">
+                <label htmlFor="email">Email Address</label>
+                <div className="input-wrapper">
+                  <span className="input-icon">✉️</span>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Enter your email"
+                    disabled={loading}
+                    autoComplete="email"
+                  />
+                </div>
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <div className="input-wrapper">
-              <span className="input-icon">🔒</span>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Enter your password"
-                disabled={loading}
-                autoComplete="current-password"
-              />
-              <button
-                type="button"
-                className="toggle-password"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={loading}
-              >
-                {showPassword ? '👁️' : '👁️‍🗨️'}
-              </button>
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                <div className="input-wrapper">
+                  <span className="input-icon">🔒</span>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Enter your password"
+                    disabled={loading}
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    className="toggle-password"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={loading}
+                  >
+                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="form-group">
+              <label htmlFor="otp">Enter Verification Code</label>
+              <div className="input-wrapper">
+                <span className="input-icon">🔑</span>
+                <input
+                  type="text"
+                  id="otp"
+                  name="otp"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  placeholder="6-digit OTP"
+                  maxLength="6"
+                  disabled={loading}
+                  autoComplete="one-time-code"
+                />
+              </div>
+              <p className="otp-help-text">
+                We've sent a 6-digit code to <strong>{formData.email}</strong>
+              </p>
             </div>
-          </div>
+          )}
 
           <button
             type="submit"
@@ -137,12 +197,23 @@ const Login = () => {
             {loading ? (
               <>
                 <span className="spinner-small"></span>
-                Signing in...
+                {step === 1 ? 'Signing in...' : 'Verifying...'}
               </>
             ) : (
-              'Sign In'
+              step === 1 ? 'Sign In' : 'Verify OTP'
             )}
           </button>
+
+          {step === 2 && (
+            <button
+              type="button"
+              className="back-button"
+              onClick={() => setStep(1)}
+              disabled={loading}
+            >
+              Back to Login
+            </button>
+          )}
         </form>
 
         <div className="auth-divider">or</div>

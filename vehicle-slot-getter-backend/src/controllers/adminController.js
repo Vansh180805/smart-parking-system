@@ -48,7 +48,7 @@ exports.getDashboardSummary = async (req, res) => {
 
     // Today's stats
     const vehiclesParkedToday = await Booking.countDocuments({
-      bookingStatus: { $in: ['parked', 'confirmed', 'completed'] },
+      bookingStatus: { $in: ['parked', 'confirmed', 'completed', 'pending', 'overdue'] },
       createdAt: { $gte: today },
     });
 
@@ -83,7 +83,7 @@ exports.getVehicleStats = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
-    let matchQuery = { bookingStatus: { $in: ['confirmed', 'parked', 'completed'] } };
+    let matchQuery = { bookingStatus: { $nin: ['cancelled'] } };
 
     if (startDate || endDate) {
       matchQuery.createdAt = {};
@@ -331,7 +331,7 @@ exports.getParkingPerformance = async (req, res) => {
           occupiedSlots,
           occupancyRate: ((occupiedSlots / parking.totalSlots) * 100).toFixed(2),
           totalBookings,
-          completedBookings,
+          completedBookings: bookings.filter((b) => b.bookingStatus === 'completed').length,
           revenue: bookings.reduce((sum, b) => sum + (b.totalPaid || 0), 0),
         };
       })
@@ -365,13 +365,13 @@ exports.getHourlyTrends = async (req, res) => {
     const hourlyData = await Booking.aggregate([
       {
         $match: {
-          parkedAt: { $gte: today, $lt: tomorrow },
+          createdAt: { $gte: today, $lt: tomorrow },
         },
       },
       {
         $group: {
           _id: {
-            $hour: '$parkedAt',
+            $hour: '$createdAt',
           },
           count: { $sum: 1 },
         },

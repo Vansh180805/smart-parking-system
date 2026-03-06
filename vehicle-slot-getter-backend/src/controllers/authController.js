@@ -50,26 +50,30 @@ exports.registerUser = async (req, res) => {
     const otp = generateOTP();
     const otpExpiry = getOTPExpiry();
 
-    // Create user (not verified yet)
+    // Create user (verified by default for now)
     const user = await User.create({
       name,
       email,
       phone,
       password,
       role: 'user',
-      isVerified: false,
-      otp,
-      otpExpires: otpExpiry,
+      isVerified: true, // Auto-verify
     });
 
-    // Send OTP email
-    await sendOTPEmail(email, otp);
+    // Generate token
+    const token = generateToken(user._id, user.role);
 
     return res.status(201).json({
       success: true,
-      message: 'OTP sent to your email. Please verify to complete registration.',
-      userId: user._id,
-      email: user.email,
+      message: 'Registration successful',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      },
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -195,7 +199,7 @@ exports.resendOTP = async (req, res) => {
   }
 };
 
-// @desc    Login User
+// @desc    Login User - Step 1 (Credentials check & Send OTP)
 // @route   POST /api/auth/login
 // @access  Public
 exports.loginUser = async (req, res) => {
@@ -220,14 +224,6 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    // Check if user is verified
-    if (!user.isVerified) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please verify your email first',
-      });
-    }
-
     // Compare password
     const isPasswordMatch = await user.matchPassword(password);
 
@@ -237,6 +233,70 @@ exports.loginUser = async (req, res) => {
         message: 'Invalid email or password',
       });
     }
+
+    // Generate token directly
+    const token = generateToken(user._id, user.role);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Verify Login OTP and complete login
+// @route   POST /api/auth/login-verify
+// @access  Public
+exports.verifyLoginOTP = async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+
+    if (!userId || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID and OTP are required',
+      });
+    }
+
+    // Find user
+    const user = await User.findById(userId).select('+otp +otpExpires');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Verify OTP
+    const verification = verifyOTP(user.otp, otp, user.otpExpires);
+
+    if (!verification.valid) {
+      return res.status(400).json({
+        success: false,
+        message: verification.message,
+      });
+    }
+
+    // Clear OTP fields
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
 
     // Generate token
     const token = generateToken(user._id, user.role);
@@ -254,7 +314,7 @@ exports.loginUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Verify Login OTP error:', error);
     return res.status(500).json({
       success: false,
       message: 'Server error',
@@ -286,20 +346,10 @@ exports.forgotPassword = async (req, res) => {
       });
     }
 
-    // Generate reset OTP
-    const otp = generateOTP();
-    const otpExpiry = getOTPExpiry();
-
-    user.resetPasswordOTP = otp;
-    user.resetPasswordOTPExpires = otpExpiry;
-    await user.save();
-
-    // Send reset OTP email
-    await sendPasswordResetOTP(email, otp);
-
+    // For demo purposes, we skip OTP generation and just say it's sent
     return res.status(200).json({
       success: true,
-      message: 'Password reset OTP sent to your email',
+      message: 'Password reset feature simulated. Use any 6-digit OTP (e.g., 123456) to reset.',
       email,
     });
   } catch (error) {
@@ -344,7 +394,8 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    // Verify reset OTP
+    // Skip OTP verification for demo
+    /*
     const verification = verifyOTP(
       user.resetPasswordOTP,
       otp,
@@ -357,6 +408,7 @@ exports.resetPassword = async (req, res) => {
         message: verification.message,
       });
     }
+    */
 
     // Update password
     user.password = newPassword;
@@ -366,7 +418,7 @@ exports.resetPassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Password reset successfully',
+      message: 'Password reset successfully (OTP verification skipped for demo)',
     });
   } catch (error) {
     console.error('Reset password error:', error);

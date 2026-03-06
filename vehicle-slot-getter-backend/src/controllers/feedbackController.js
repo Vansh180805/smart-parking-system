@@ -1,4 +1,5 @@
 const Feedback = require('../models/Feedback');
+const User = require('../models/User');
 
 // @desc    Submit new feedback/support request
 // @route   POST /api/feedback
@@ -6,12 +7,21 @@ const Feedback = require('../models/Feedback');
 exports.submitFeedback = async (req, res) => {
     try {
         const { subject, message, rating } = req.body;
-        const { userId, name, email } = req.user;
+        const userId = req.user.userId;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
 
         const feedback = await Feedback.create({
             userId,
-            name,
-            email,
+            name: user.name,
+            email: user.email,
             subject,
             message,
             rating,

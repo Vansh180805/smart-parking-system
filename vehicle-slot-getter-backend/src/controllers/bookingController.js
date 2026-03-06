@@ -2,6 +2,7 @@ const Booking = require('../models/Booking');
 const Slot = require('../models/Slot');
 const ParkingLot = require('../models/ParkingLot');
 const Payment = require('../models/Payment');
+const Feedback = require('../models/Feedback');
 const User = require('../models/User');
 const { generateBookingQR } = require('../utils/qrGenerator');
 const {
@@ -16,7 +17,15 @@ const {
 exports.getNearestParking = async (req, res) => {
   try {
     const { lat, lon, radius } = req.query;
-    const searchRadius = parseFloat(radius) || 5;
+    const searchRadius = parseFloat(radius || 5); // Default to 5km if not provided
+    console.log(`📡 SEARCH: Lat:${lat}, Lon:${lon}, Radius:${searchRadius}km`);
+
+    if (!lat || !lon) {
+      return res.status(400).json({
+        success: false,
+        message: 'Latitude and longitude are required.',
+      });
+    }
 
     const allActiveLots = await ParkingLot.find({ isActive: true });
 
@@ -36,11 +45,18 @@ exports.getNearestParking = async (req, res) => {
     }).sort((a, b) => a.distance - b.distance);
 
     // Filter by radius
-    const nearbyParking = lotsWithDistance.filter(lot => lot.distance <= searchRadius);
+    let nearbyParking = lotsWithDistance.filter(lot => lot.distance <= searchRadius);
+
+    // If no parking found in radius, fallback to all active lots sorted by distance
+    if (nearbyParking.length === 0) {
+      console.log(`⚠️ Radius Empty. Falling back to all ${lotsWithDistance.length} active lots.`);
+      nearbyParking = lotsWithDistance;
+    }
 
     return res.status(200).json({
       success: true,
       count: nearbyParking.length,
+      isFallback: nearbyParking.length === lotsWithDistance.length && searchRadius < 1000, // Consider fallback if radius was small and we returned all
       data: { parkingLots: nearbyParking },
     });
 
@@ -131,12 +147,19 @@ exports.createBooking = async (req, res) => {
     const userId = req.user.userId;
 
     // Validation
-    console.log('📦 Create Booking Body:', req.body);
-    if (!parkingId || !slotId || !vehicleType || !vehicleNumber || !startTime || !endTime) {
-      console.log('❌ Missing fields:', { parkingId, slotId, vehicleType, vehicleNumber, startTime, endTime });
+    const missingFields = [];
+    if (!parkingId) missingFields.push('parkingId');
+    if (!slotId) missingFields.push('slotId');
+    if (!vehicleType) missingFields.push('vehicleType');
+    if (!vehicleNumber) missingFields.push('vehicleNumber');
+    if (!startTime) missingFields.push('startTime');
+    if (!endTime) missingFields.push('endTime');
+
+    if (missingFields.length > 0) {
+      console.log('❌ Missing fields:', missingFields);
       return res.status(400).json({
         success: false,
-        message: 'All fields are required',
+        message: `Missing fields: ${missingFields.join(', ')}`,
       });
     }
 
@@ -166,11 +189,21 @@ exports.createBooking = async (req, res) => {
       });
     }
 
-    // Calculate booking amount
+    // Calculate booking amount (pro-rated for short durations)
     const start = new Date(startTime);
     const end = new Date(endTime);
-    const hours = Math.ceil((end - start) / (1000 * 60 * 60));
-    const bookingAmount = hours * parking.hourlyRate;
+    const diffMs = end - start;
+    const hours = diffMs / (1000 * 60 * 60);
+
+    let bookingAmount;
+    if (hours >= 1) {
+      bookingAmount = Math.ceil(hours) * parking.hourlyRate;
+    } else {
+      // For under 1 hour, calculate by minute (pro-rated)
+      const minutes = Math.ceil(diffMs / (1000 * 60));
+      const proRated = Math.ceil((parking.hourlyRate / 60) * minutes);
+      bookingAmount = Math.max(proRated, 10); // Minimum ₹10 charge
+    }
 
     // Create booking
     const booking = await Booking.create({
@@ -190,11 +223,6 @@ exports.createBooking = async (req, res) => {
     const qrCode = await generateBookingQR(booking);
     booking.qrCode = qrCode;
     await booking.save();
-
-    // Temporarily mark slot as reserved
-    slot.status = 'reserved';
-    slot.currentBookingId = booking._id;
-    await slot.save();
 
     return res.status(201).json({
       success: true,
@@ -445,5 +473,67 @@ exports.checkOverstay = async (req, res) => {
       message: 'Server error',
       error: error.message,
     });
+  }
+};
+// @desc    Process vehicle exit
+// @route   POST /api/bookings/:bookingId/exit
+// @access  Private
+exports.processExit = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const booking = await Booking.findById(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    if (booking.bookingStatus === 'completed') {
+      return res.status(400).json({ success: false, message: 'Vehicle already exited' });
+    }
+
+    const now = new Date();
+    const endTime = new Date(booking.endTime);
+
+    // If overstayed and fine not paid
+    if (now > endTime && !booking.finePaid) {
+      const parking = await ParkingLot.findById(booking.parkingId);
+      const hoursOverstay = Math.ceil((now - endTime) / (1000 * 60 * 60));
+      const fineAmount = hoursOverstay * (parking.overStayFinePerHour || 100);
+
+      booking.fineAmount = fineAmount;
+      booking.bookingStatus = 'overdue';
+      await booking.save();
+
+      return res.status(200).json({
+        success: true,
+        isOverstay: true,
+        fineAmount,
+        message: `Overstay detected. Please pay fine of ₹${fineAmount} to exit.`,
+      });
+    }
+
+    // Normal Exit
+    booking.bookingStatus = 'completed';
+    booking.unparkedAt = now;
+    booking.isParked = false;
+    await booking.save();
+
+    // Free the slot
+    const Slot = require('../models/Slot');
+    const slot = await Slot.findById(booking.slotId);
+    if (slot) {
+      slot.status = 'available';
+      slot.currentBookingId = null;
+      await slot.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      isOverstay: false,
+      message: 'Vehicle exited successfully. Thank you!',
+    });
+  } catch (error) {
+    console.error('Process exit error:', error);
+    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };

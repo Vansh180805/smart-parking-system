@@ -89,6 +89,13 @@ const Register = () => {
       );
 
       if (data.success) {
+        // If the backend returns token and user (auto-login after registration)
+        if (data.token && data.user) {
+          setError('');
+          navigate('/bookings');
+          return;
+        }
+
         setOtpData(prev => ({
           ...prev,
           userId: data.userId,

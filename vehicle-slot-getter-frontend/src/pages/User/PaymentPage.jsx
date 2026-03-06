@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { bookingService } from '../../services/api';
 import '../../styles/PaymentPage.css';
 
 const PaymentPage = () => {
     const { bookingId } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -86,7 +88,7 @@ const PaymentPage = () => {
 
                         if (verifyRes.data.success) {
                             alert('Payment Successful!');
-                            navigate('/my-bookings');
+                            navigate('/bookings/history');
                         } else {
                             alert('Verification failed: ' + verifyRes.data.message);
                         }
@@ -96,8 +98,8 @@ const PaymentPage = () => {
                     }
                 },
                 prefill: {
-                    name: 'User',
-                    email: 'user@example.com',
+                    name: user?.name || 'User',
+                    email: user?.email || 'user@example.com',
                 },
                 theme: {
                     color: '#3399cc',
@@ -112,7 +114,8 @@ const PaymentPage = () => {
 
         } catch (err) {
             console.error('Payment Error:', err);
-            alert('Error initiating payment.');
+            const msg = err.response?.data?.message || 'Error initiating payment.';
+            alert(msg);
         } finally {
             setVerifying(false);
         }

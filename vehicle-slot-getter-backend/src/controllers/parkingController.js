@@ -8,7 +8,7 @@ const Slot = require("../models/Slot");
 exports.createParking = async (req, res) => {
   try {
 
-    const { name, address, latitude, longitude, totalSlots } = req.body;
+    const { name, address, latitude, longitude, totalSlots, hourlyRate } = req.body;
 
     if (!name || !address || !latitude || !longitude || !totalSlots) {
       return res.status(400).json({
@@ -22,13 +22,12 @@ exports.createParking = async (req, res) => {
       address,
       totalSlots,
 
-      // ⭐ MOST IMPORTANT PART
       location: {
         type: "Point",
         coordinates: [Number(longitude), Number(latitude)]
       },
-
-      createdBy: req.user?.userId
+      createdBy: req.user?.userId,
+      hourlyRate: hourlyRate || 50
     });
 
 
@@ -260,11 +259,12 @@ exports.updateParking = async (req, res) => {
       });
     }
 
-    const { name, address, totalSlots } = req.body;
+    const { name, address, totalSlots, hourlyRate, ratesByType } = req.body;
 
     if (name) parking.name = name;
     if (address) parking.address = address;
     if (totalSlots) parking.totalSlots = totalSlots;
+    if (hourlyRate) parking.hourlyRate = hourlyRate;
 
     await parking.save();
 

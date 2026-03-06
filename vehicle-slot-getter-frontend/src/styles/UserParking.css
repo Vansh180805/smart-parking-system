@@ -12,6 +12,11 @@
   color: white;
   padding: 40px 20px;
   text-align: center;
+  transition: background 0.3s ease;
+}
+
+[data-theme='dark'] .parking-header {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
 }
 
 .parking-header h1 {
@@ -45,6 +50,12 @@
   margin-bottom: 24px;
   color: #991b1b;
   font-weight: 500;
+}
+
+[data-theme='dark'] .error-banner {
+  background: #450a0a;
+  border-color: #7f1d1d;
+  color: #fecaca;
 }
 
 .error-banner button {
@@ -357,6 +368,15 @@
   color: #1f2937;
 }
 
+[data-theme='dark'] .booking-sidebar {
+  background: #1f2937;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .booking-sidebar h3 {
+  color: #f3f4f6;
+}
+
 .form-group {
   margin-bottom: 20px;
   display: flex;
@@ -372,6 +392,10 @@
   letter-spacing: 0.5px;
 }
 
+[data-theme='dark'] .form-group label {
+  color: #9ca3af;
+}
+
 .form-control {
   padding: 12px;
   border: 2px solid #e5e7eb;
@@ -381,11 +405,50 @@
   background: #f9fafb;
 }
 
+[data-theme='dark'] .form-control {
+  background: #111827;
+  border-color: #374151;
+  color: #f3f4f6;
+}
+
 .form-control:focus {
   outline: none;
   border-color: #667eea;
   background: white;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+[data-theme='dark'] .form-control:focus {
+  background: #111827;
+}
+
+/* Explicitly target select for better theme support */
+select.form-control {
+  cursor: pointer;
+  appearance: auto;
+}
+
+[data-theme='dark'] select.form-control,
+[data-theme='dark'] select.form-control:focus,
+[data-theme='dark'] select.form-control:active {
+  background-color: #111827 !important;
+  color: #f3f4f6 !important;
+  border-color: #374151;
+}
+
+[data-theme='dark'] select.form-control option {
+  background-color: #1f2937;
+  color: #f3f4f6;
+}
+
+/* Dark mode fix for Date/Time picker icon */
+[data-theme='dark'] input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+[data-theme='dark'] input[type="number"] {
+  color-scheme: dark;
 }
 
 .parking-display {
@@ -398,6 +461,12 @@
   border-radius: 8px;
   font-weight: 600;
   color: #1f2937;
+}
+
+[data-theme='dark'] .parking-display {
+  background: #111827;
+  border-color: #374151;
+  color: #f3f4f6;
 }
 
 .change-btn {
@@ -425,6 +494,10 @@
   border-left: 4px solid #667eea;
 }
 
+[data-theme='dark'] .booking-summary {
+  background: #111827;
+}
+
 .summary-row {
   display: flex;
   justify-content: space-between;
@@ -440,6 +513,10 @@
 .summary-row span:last-child {
   font-weight: 600;
   color: #1f2937;
+}
+
+[data-theme='dark'] .summary-row span:last-child {
+  color: #f3f4f6;
 }
 
 .summary-total {
@@ -516,6 +593,15 @@
   font-size: 20px;
   font-weight: 700;
   color: #1f2937;
+}
+
+[data-theme='dark'] .slots-section {
+  background: #1f2937;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .slots-section h3 {
+  color: #f3f4f6;
 }
 
 /* Responsive */

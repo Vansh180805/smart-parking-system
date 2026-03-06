@@ -3,6 +3,7 @@ const Slot = require('../models/Slot');
 const ParkingLot = require('../models/ParkingLot');
 const { sendParkingConfirmation } = require('../utils/emailSender');
 const User = require('../models/User');
+const mongoose = require('mongoose');
 
 // @desc    Verify QR code and allow parking entry
 // @route   POST /api/staff/verify-parking
@@ -12,8 +13,13 @@ exports.verifyParking = async (req, res) => {
     const { bookingId, slotId } = req.body;
     const staffId = req.user.userId;
 
-    // Find booking
-    const booking = await Booking.findById(bookingId);
+    // Find booking (handle both MongoDB _id and human-readable BK- id)
+    let booking;
+    if (mongoose.Types.ObjectId.isValid(bookingId)) {
+      booking = await Booking.findById(bookingId);
+    } else {
+      booking = await Booking.findOne({ bookingId: bookingId });
+    }
 
     if (!booking) {
       return res.status(404).json({
@@ -39,12 +45,9 @@ exports.verifyParking = async (req, res) => {
 
     const now = new Date();
 
-    // Check if booking time has started
+    // Allowing early entry for better UX/Demonstration
     if (now < new Date(booking.startTime)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Booking time has not started yet',
-      });
+      console.log('ℹ️ Early arrival detected. Adjusting start time to now.');
     }
 
     // Check if booking has expired
@@ -55,7 +58,10 @@ exports.verifyParking = async (req, res) => {
       });
     }
 
-    // Update booking status
+    // Update booking status and shift timing
+    const originalDuration = booking.endTime - booking.startTime;
+    booking.startTime = now; // Start clock from arrival
+    booking.endTime = new Date(now.getTime() + originalDuration); // Shifting end time to preserve duration
     booking.isParked = true;
     booking.parkedAt = now;
     booking.bookingStatus = 'parked';
@@ -71,10 +77,20 @@ exports.verifyParking = async (req, res) => {
       await slot.save();
     }
 
-    // Send parking confirmation email
-    const user = await User.findById(booking.userId);
-    const parking = await ParkingLot.findById(booking.parkingId);
-    await sendParkingConfirmation(booking, user, parking, slot);
+    // Send parking confirmation email (Robust lookup)
+    try {
+      const user = await User.findById(booking.userId);
+      const parking = await ParkingLot.findById(booking.parkingId);
+
+      if (user && user.email) {
+        console.log(`📧 Preparing parking confirmation for: ${user.email}`);
+        await sendParkingConfirmation(booking, user, parking || { name: 'Your Booked Parking' }, slot);
+      } else {
+        console.warn('⚠️ User or Email not found for parking confirmation');
+      }
+    } catch (emailError) {
+      console.error('❌ Failed to send parking confirmation email:', emailError);
+    }
 
     return res.status(200).json({
       success: true,
@@ -174,7 +190,7 @@ exports.getPendingEntries = async (req, res) => {
       isParked: false,
     };
 
-    if (parkingId) {
+    if (parkingId && mongoose.Types.ObjectId.isValid(parkingId)) {
       query.parkingId = parkingId;
     }
 
@@ -219,7 +235,7 @@ exports.getParkedVehicles = async (req, res) => {
       isParked: true,
     };
 
-    if (parkingId) {
+    if (parkingId && mongoose.Types.ObjectId.isValid(parkingId)) {
       query.parkingId = parkingId;
     }
 
@@ -258,10 +274,18 @@ exports.getBookingDetails = async (req, res) => {
   try {
     const { bookingId } = req.params;
 
-    const booking = await Booking.findById(bookingId)
-      .populate('userId', 'name email phone')
-      .populate('slotId', 'slotNumber slotType')
-      .populate('parkingId', 'name address');
+    let booking;
+    if (mongoose.Types.ObjectId.isValid(bookingId)) {
+      booking = await Booking.findById(bookingId)
+        .populate('userId', 'name email phone')
+        .populate('slotId', 'slotNumber slotType')
+        .populate('parkingId', 'name address');
+    } else {
+      booking = await Booking.findOne({ bookingId: bookingId })
+        .populate('userId', 'name email phone')
+        .populate('slotId', 'slotNumber slotType')
+        .populate('parkingId', 'name address');
+    }
 
     if (!booking) {
       return res.status(404).json({
