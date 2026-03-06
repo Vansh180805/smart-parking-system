@@ -1,5 +1,5 @@
 {
-  "name": "vehicle-slot-getter-frontend",
+  "name": "smart-parking-system-frontend",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -50,3 +50,4 @@
     "tailwindcss": "^3.4.18"
   }
 }
+

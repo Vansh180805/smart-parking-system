@@ -14,7 +14,7 @@ Ensure you have installed:
 
 ### 1a. Navigate to Backend Directory
 ```bash
-cd vehicle-slot-getter-backend
+cd smart-parking-system-backend
 npm install
 ```
 
@@ -60,7 +60,7 @@ Expected output:
 
 ### 2a. Navigate to Frontend Directory
 ```bash
-cd vehicle-slot-getter-frontend
+cd smart-parking-system-frontend
 npm install
 ```
 
@@ -172,13 +172,13 @@ Error: Invalid login: 535-5.7.8 Username and password not accepted
 **Solution:**
 - Restart backend server
 - Clear node_modules and reinstall: `rm -rf node_modules && npm install`
-- Ensure .env file is in the root directory (vehicle-slot-getter-backend)
+- Ensure .env file is in the root directory (smart-parking-system-backend)
 
 ## File Structure Quick Reference
 
 ```
-📦 vehicle-slot-getter/
-├── 📁 vehicle-slot-getter-backend/
+📦 smart-parking-system/
+├── 📁 smart-parking-system-backend/
 │   ├── .env                    ← Your config file
 │   ├── src/
 │   │   ├── server.js          ← Main server
@@ -188,7 +188,7 @@ Error: Invalid login: 535-5.7.8 Username and password not accepted
 │   │   └── utils/             ← Helper functions
 │   └── package.json
 │
-└── 📁 vehicle-slot-getter-frontend/
+└── 📁 smart-parking-system-frontend/
     ├── src/
     │   ├── pages/             ← React pages
     │   ├── components/        ← React components
@@ -410,7 +410,7 @@ You're all set when you see:
 **Frontend:**
 ```
 Compiled successfully!
-You can now view vehicle-slot-getter-frontend in the browser.
+You can now view smart-parking-system-frontend in the browser.
 ```
 
 **Browser:**
@@ -436,3 +436,4 @@ For detailed information, see:
 - `FRONTEND_COMPLETION_SUMMARY.md` - What was built
 
 Last Updated: 2024
+

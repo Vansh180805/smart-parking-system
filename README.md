@@ -71,7 +71,7 @@ A complete MERN stack application for smart parking lot management with real-tim
 
 ### Backend
 ```
-vehicle-slot-getter-backend/
+smart-parking-system-backend/
 ├── src/
 │   ├── server.js           # Express server setup
 │   ├── config/
@@ -106,7 +106,7 @@ vehicle-slot-getter-backend/
 
 ### Frontend
 ```
-vehicle-slot-getter-frontend/
+smart-parking-system-frontend/
 ├── src/
 │   ├── App.js               # Main app with routing
 │   ├── pages/
@@ -142,7 +142,7 @@ vehicle-slot-getter-frontend/
 
 1. **Clone and Install**
 ```bash
-cd vehicle-slot-getter-backend
+cd smart-parking-system-backend
 npm install
 ```
 
@@ -177,7 +177,7 @@ npm start
 
 1. **Install Dependencies**
 ```bash
-cd vehicle-slot-getter-frontend
+cd smart-parking-system-frontend
 npm install
 ```
 
@@ -444,3 +444,4 @@ For issues, questions, or suggestions:
 
 **Last Updated**: 2024
 **Status**: Production Ready
+

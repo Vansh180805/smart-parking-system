@@ -577,8 +577,8 @@ PRODUCTION:
 
 ## Quick Start Reminder
 
-1. **Backend**: `cd vehicle-slot-getter-backend && npm install && npm start`
-2. **Frontend**: `cd vehicle-slot-getter-frontend && npm install && npm start`
+1. **Backend**: `cd smart-parking-system-backend && npm install && npm start`
+2. **Frontend**: `cd smart-parking-system-frontend && npm install && npm start`
 3. **Test**: Use demo credentials (user@example.com / password123)
 4. **Deploy**: Follow QUICK_START.md deployment section
 
@@ -599,4 +599,5 @@ This Smart Vehicle Parking System represents a complete, production-ready applic
 The system is fully functional, well-documented, and ready for deployment. All components are integrated, tested, and follow best practices for production applications.
 
 **Status: ✅ PRODUCTION READY**
+
 

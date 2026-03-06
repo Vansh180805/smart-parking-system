@@ -1,5 +1,5 @@
 {
-  "name": "vehicle-slot-getter-backend",
+  "name": "smart-parking-system-backend",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -27,3 +27,4 @@
     "nodemon": "^3.1.11"
   }
 }
+
