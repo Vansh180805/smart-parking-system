@@ -447,6 +447,15 @@ For issues, questions, or suggestions:
 
 **Built with ❤️ using MERN Stack**
 
-**Last Updated**: 2024
+**Last Updated**: 2026
 **Status**: Production Ready
 
+## Author
+
+Vansh Kaushik  
+Full Stack Developer  
+Chitkara University  
+
+© 2026 Vansh Kaushik. All rights reserved.
+This project is shared publicly for demonstration and interview purposes only.
+Unauthorized copying, redistribution, or reuse of this code is strictly prohibited.
