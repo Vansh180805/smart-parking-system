@@ -1,5 +1,10 @@
 # Smart Vehicle Parking Slot Booking System 🅿️
+© 2026 Vansh Kaushik
 
+This project was developed as a full-stack MERN Smart Parking Management System.
+This repository is shared publicly for demonstration and interview purposes only.
+
+Unauthorized copying, redistribution, or reuse of this code without permission is strictly prohibited.
 A complete MERN stack application for smart parking lot management with real-time slot visualization, OTP-based authentication, advanced analytics, and automated fine calculations.
 
 ## Features ✨
