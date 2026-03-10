@@ -400,13 +400,13 @@ npm start
 ## Troubleshooting 🔧
 
 ### MongoDB Connection Error
-```bash
+
 # Ensure MongoDB is running
 mongod
 
-# Or use MongoDB Atlas with correct connection string
-MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/parking_system
-```
+# Or use MongoDB Atlas with your connection string
+MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/parking_system
+
 
 ### Email Not Sending
 - Enable Less Secure App Access in Gmail
