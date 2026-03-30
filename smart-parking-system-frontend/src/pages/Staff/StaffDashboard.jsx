@@ -49,9 +49,10 @@ const StaffDashboard = () => {
     try {
       setLoading(true);
       const response = await staffService.getPendingEntries(null, 1, 50);
-      console.log('📋 Staff Pending Response:', response);
+      console.log('📋 Staff Pending Response:', response.data);
       if (response.data.success) {
-        setPendingEntries(response.data.data?.bookings || []);
+        // Backend returns data directly as an array of bookings
+        setPendingEntries(Array.isArray(response.data.data) ? response.data.data : []);
       } else {
         setError(response.data.message || 'Failed to load pending entries');
       }
@@ -67,9 +68,10 @@ const StaffDashboard = () => {
     try {
       setLoading(true);
       const response = await staffService.getParkedVehicles(null, 1, 50);
-      console.log('🅿️ Staff Parked Response:', response);
+      console.log('🅿️ Staff Parked Response:', response.data);
       if (response.data.success) {
-        setParkedVehicles(response.data.data?.bookings || []);
+        // Backend returns data directly as an array of bookings
+        setParkedVehicles(Array.isArray(response.data.data) ? response.data.data : []);
       } else {
         setError(response.data.message || 'Failed to load parked vehicles');
       }
@@ -81,15 +83,46 @@ const StaffDashboard = () => {
     }
   };
 
+  // Helper component for live timer
+  const ParkedTimer = ({ startTime }) => {
+    const [elapsed, setElapsed] = useState('');
+
+    useEffect(() => {
+      const calculateElapsed = () => {
+        const start = new Date(startTime);
+        const now = new Date();
+        const diff = Math.floor((now - start) / 1000); // seconds
+
+        if (diff < 0) return 'Just started';
+
+        const hours = Math.floor(diff / 3600);
+        const minutes = Math.floor((diff % 3600) / 60);
+        const seconds = diff % 60;
+
+        return `${hours}h ${minutes}m ${seconds}s`;
+      };
+
+      setElapsed(calculateElapsed());
+      const interval = setInterval(() => {
+        setElapsed(calculateElapsed());
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }, [startTime]);
+
+    return <span className="timer-value">{elapsed}</span>;
+  };
+
   const handleVerifyParking = async (bookingId) => {
     try {
       setLoading(true);
       setError('');
 
+      const entry = pendingEntries.find(e => e._id === bookingId);
       const response = await staffService.verifyParking({
         bookingId,
-        parkingId: pendingEntries.find(e => e._id === bookingId)?.parkingId,
-        slotId: pendingEntries.find(e => e._id === bookingId)?.slotId,
+        parkingId: entry?.parkingId?._id || entry?.parkingId,
+        slotId: entry?.slotId?._id || entry?.slotId,
       });
 
       if (response.data.success) {
@@ -100,19 +133,20 @@ const StaffDashboard = () => {
         });
         setTimeout(() => {
           setVerificationResult(null);
+          setTab('parked');
           fetchPendingEntries();
           fetchParkedVehicles();
         }, 3000);
       } else {
         setVerificationResult({
           success: false,
-          message: response.message || 'Verification failed',
+          message: response.data.message || 'Verification failed',
         });
       }
     } catch (err) {
       setVerificationResult({
         success: false,
-        message: err.message || 'Error verifying parking',
+        message: err.response?.data?.message || err.message || 'Error verifying parking',
       });
       console.error('Error:', err);
     } finally {
@@ -138,17 +172,17 @@ const StaffDashboard = () => {
         setTimeout(() => {
           setVerificationResult(null);
           fetchParkedVehicles();
-        }, 3000);
+        }, 5000);
       } else {
         setVerificationResult({
           success: false,
-          message: response.message || 'Failed to mark vehicle as unparked',
+          message: response.data.message || 'Failed to mark vehicle as unparked',
         });
       }
     } catch (err) {
       setVerificationResult({
         success: false,
-        message: err.message || 'Error marking vehicle as unparked',
+        message: err.response?.data?.message || err.message || 'Error marking vehicle as unparked',
       });
     } finally {
       setLoading(false);
@@ -209,10 +243,19 @@ const StaffDashboard = () => {
         });
         setLookupResult(null);
         setQrInput('');
-        fetchPendingEntries();
+        
+        // Refresh data and switch tab after a short delay
+        setTimeout(() => {
+          setVerificationResult(null);
+          setTab('parked');
+          fetchParkedVehicles();
+        }, 2000);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Verification failed');
+      setVerificationResult({
+        success: false,
+        message: err.response?.data?.message || err.message || 'Verification failed',
+      });
     } finally {
       setLoading(false);
     }
@@ -346,7 +389,7 @@ const StaffDashboard = () => {
                     </div>
                   </div>
 
-                  <div style={{ marginTop: '25px', paddingTop: '20px', borderTop: '1px dashed #bae6fd' }}>
+                  <div className="action-container" style={{ marginTop: '25px', paddingTop: '20px', borderTop: '1px dashed #bae6fd' }}>
                     {lookupResult.bookingStatus === 'confirmed' ? (
                       <button
                         onClick={handleConfirmEntry}
@@ -366,6 +409,30 @@ const StaffDashboard = () => {
                       >
                         🚀 ALLOW ENTRY & MARK PARKED
                       </button>
+                    ) : lookupResult.bookingStatus === 'parked' ? (
+                      <div style={{ textAlign: 'center' }}>
+                        <p style={{ color: '#0369a1', fontWeight: 600, marginBottom: '15px' }}>
+                          ℹ️ Vehicle is currently parked. Ready for exit?
+                        </p>
+                        <button
+                          onClick={() => handleMarkUnparked(lookupResult._id)}
+                          className="exit-park-btn"
+                          style={{
+                            width: '100%',
+                            padding: '16px',
+                            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontWeight: 800,
+                            fontSize: '1rem',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
+                          }}
+                        >
+                          🚪 EXIT VEHICLE & CALCULATE FINE
+                        </button>
+                      </div>
                     ) : (
                       <div style={{ color: '#dc2626', fontWeight: 700, textAlign: 'center' }}>
                         ⚠️ This vehicle is already marked as {lookupResult.bookingStatus}.
@@ -493,6 +560,14 @@ const StaffDashboard = () => {
                             : 'N/A'}
                         </span>
                       </div>
+                      {vehicle.parkedAt && (
+                        <div className="info-row highlight">
+                          <span className="label">Parked Duration:</span>
+                          <span className="value timer">
+                            <ParkedTimer startTime={vehicle.parkedAt} />
+                          </span>
+                        </div>
+                      )}
                       <div className="info-row">
                         <span className="label">Slot:</span>
                         <span className="value">{vehicle.slotId?.slotNumber || 'N/A'}</span>

@@ -5,11 +5,7 @@ const Payment = require('../models/Payment');
 const Feedback = require('../models/Feedback');
 const User = require('../models/User');
 const { generateBookingQR } = require('../utils/qrGenerator');
-const {
-  sendBookingConfirmation,
-  sendParkingConfirmation,
-  sendOverstayNotification,
-} = require('../utils/emailSender');
+
 
 // @desc    Get nearest parking lots
 // @route   GET /api/bookings/nearest-parking?lat=x&lon=y&radius=5
@@ -263,7 +259,7 @@ exports.paymentQR = async (req, res) => {
       });
     }
 
-    if (booking.paymentStatus === 'completed') {
+    if (booking.paymentStatus === 'completed' && booking.bookingStatus !== 'overdue') {
       return res.status(400).json({
         success: false,
         message: 'Payment already completed',
@@ -272,34 +268,45 @@ exports.paymentQR = async (req, res) => {
 
     // Simulate payment success
     const transactionId = 'TXN-' + Date.now();
+    const isOverdue = booking.bookingStatus === 'overdue';
+    const amountToPay = isOverdue ? booking.fineAmount : booking.bookingAmount;
 
     // Create payment record
     const payment = await Payment.create({
       bookingId,
       userId,
-      amount: booking.bookingAmount,
-      paymentType: 'booking',
+      amount: amountToPay,
+      paymentType: isOverdue ? 'fine' : 'booking',
       status: 'completed',
       transactionId,
     });
 
     // Update booking
-    booking.paymentStatus = 'completed';
+    if (isOverdue) {
+      booking.finePaid = true;
+      booking.bookingStatus = 'completed'; // After fine, its complete
+    } else {
+      booking.paymentStatus = 'completed';
+      booking.bookingStatus = 'confirmed';
+    }
+    
     booking.transactionId = transactionId;
-    booking.bookingStatus = 'confirmed';
+    booking.totalPaid = (booking.totalPaid || 0) + amountToPay;
     await booking.save();
 
     // Update slot status
     const slot = await Slot.findById(booking.slotId);
     if (slot) {
-      slot.status = 'reserved';
+      if (isOverdue) {
+        slot.status = 'available'; // Freed
+        slot.currentBookingId = null;
+      } else {
+        slot.status = 'reserved'; // Reserved until parked
+      }
+      await slot.save();
     }
-    await slot.save();
 
-    // Send confirmation email
-    const user = await User.findById(userId);
-    const parking = await ParkingLot.findById(booking.parkingId);
-    await sendBookingConfirmation(booking, user, parking, slot);
+    console.log(`📧 [EMAIL SIMULATION]: Payment confirmation would be sent to: ${userId}`);
 
     return res.status(200).json({
       success: true,
@@ -448,9 +455,7 @@ exports.checkOverstay = async (req, res) => {
       booking.bookingStatus = 'overdue';
       await booking.save();
 
-      // Send overstay notification
-      const user = await User.findById(booking.userId);
-      await sendOverstayNotification(booking, user, parking, fineAmount);
+      console.log(`📧 [EMAIL SIMULATION]: Overstay notification would be sent.`);
 
       return res.status(200).json({
         success: true,

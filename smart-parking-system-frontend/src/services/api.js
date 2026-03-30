@@ -44,6 +44,7 @@ export const authService = {
   getMe: () => api.get('/auth/me'),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   resetPassword: (data) => api.post('/auth/reset-password', data),
+  googleLogin: (data) => api.post('/auth/google', data),
 };
 
 // ===== PARKING SERVICES =====

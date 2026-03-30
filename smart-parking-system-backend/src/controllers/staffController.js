@@ -1,7 +1,6 @@
 const Booking = require('../models/Booking');
 const Slot = require('../models/Slot');
 const ParkingLot = require('../models/ParkingLot');
-const { sendParkingConfirmation } = require('../utils/emailSender');
 const User = require('../models/User');
 const mongoose = require('mongoose');
 
@@ -70,27 +69,16 @@ exports.verifyParking = async (req, res) => {
 
     // Update slot status
     const slot = await Slot.findById(slotId);
-    if (slot) {
-      slot.status = 'occupied';
-      slot.currentBookingId = bookingId;
-      slot.lastOccupiedTime = now;
-      await slot.save();
+    if (!slot) {
+       return res.status(404).json({ success: false, message: 'Slot not found' });
     }
+    
+    slot.status = 'occupied';
+    slot.currentBookingId = bookingId;
+    slot.lastOccupiedTime = now;
+    await slot.save();
 
-    // Send parking confirmation email (Robust lookup)
-    try {
-      const user = await User.findById(booking.userId);
-      const parking = await ParkingLot.findById(booking.parkingId);
-
-      if (user && user.email) {
-        console.log(`📧 Preparing parking confirmation for: ${user.email}`);
-        await sendParkingConfirmation(booking, user, parking || { name: 'Your Booked Parking' }, slot);
-      } else {
-        console.warn('⚠️ User or Email not found for parking confirmation');
-      }
-    } catch (emailError) {
-      console.error('❌ Failed to send parking confirmation email:', emailError);
-    }
+    console.log(`📧 [EMAIL SIMULATION]: Parking confirmation would be sent to: ${booking.userId?.email || 'user'}`);
 
     return res.status(200).json({
       success: true,
@@ -99,7 +87,7 @@ exports.verifyParking = async (req, res) => {
         bookingId: booking._id,
         vehicleNumber: booking.vehicleNumber,
         slotNumber: slot.slotNumber,
-        userName: user.name,
+        userName: booking.userId?.name || 'User',
         parkedAt: booking.parkedAt,
       },
     });

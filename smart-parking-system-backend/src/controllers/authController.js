@@ -1,7 +1,5 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { generateOTP, getOTPExpiry, verifyOTP } = require('../utils/otpUtil');
-const { sendOTPEmail, sendPasswordResetOTP } = require('../utils/emailSender');
 
 // Generate JWT Token
 const generateToken = (userId, role) => {
@@ -12,14 +10,13 @@ const generateToken = (userId, role) => {
   );
 };
 
-// @desc    Register User - Step 1 (Send OTP)
+// @desc    Register User
 // @route   POST /api/auth/register
 // @access  Public
 exports.registerUser = async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
 
-    // Validation
     if (!name || !email || !phone || !password) {
       return res.status(400).json({
         success: false,
@@ -27,45 +24,26 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password must be at least 6 characters',
-      });
-    }
-
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ email }, { phone }],
-    });
-
+    const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User already exists with this email or phone',
+        message: 'User already exists',
       });
     }
 
-    // Generate OTP
-    const otp = generateOTP();
-    const otpExpiry = getOTPExpiry();
-
-    // Create user (verified by default for now)
     const user = await User.create({
       name,
       email,
       phone,
       password,
-      role: 'user',
-      isVerified: true, // Auto-verify
+      isVerified: true
     });
 
-    // Generate token
     const token = generateToken(user._id, user.role);
 
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
-      message: 'Registration successful',
       token,
       user: {
         id: user._id,
@@ -76,170 +54,44 @@ exports.registerUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Register error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// @desc    Verify OTP and Complete Registration
-// @route   POST /api/auth/verify-otp
-// @access  Public
-exports.verifyOTP = async (req, res) => {
-  try {
-    const { userId, otp } = req.body;
-
-    if (!userId || !otp) {
-      return res.status(400).json({
-        success: false,
-        message: 'User ID and OTP are required',
-      });
-    }
-
-    // Find user
-    const user = await User.findById(userId).select('+otp +otpExpires');
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
-    }
-
-    // Verify OTP
-    const verification = verifyOTP(user.otp, otp, user.otpExpires);
-
-    if (!verification.valid) {
-      return res.status(400).json({
-        success: false,
-        message: verification.message,
-      });
-    }
-
-    // Mark user as verified
-    user.isVerified = true;
-    user.otp = undefined;
-    user.otpExpires = undefined;
-    await user.save();
-
-    // Generate token
-    const token = generateToken(user._id, user.role);
-
-    return res.status(200).json({
-      success: true,
-      message: 'Email verified successfully',
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    console.error('Verify OTP error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message,
-    });
-  }
-};
-
-// @desc    Resend OTP
-// @route   POST /api/auth/resend-otp
-// @access  Public
-exports.resendOTP = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required',
-      });
-    }
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
-    }
-
-    // Generate new OTP
-    const otp = generateOTP();
-    const otpExpiry = getOTPExpiry();
-
-    user.otp = otp;
-    user.otpExpires = otpExpiry;
-    await user.save();
-
-    // Send OTP email
-    await sendOTPEmail(email, otp);
-
-    return res.status(200).json({
-      success: true,
-      message: 'OTP resent to your email',
-      userId: user._id,
-    });
-  } catch (error) {
-    console.error('Resend OTP error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message,
-    });
-  }
-};
-
-// @desc    Login User - Step 1 (Credentials check & Send OTP)
+// @desc    Login User
 // @route   POST /api/auth/login
 // @access  Public
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validation
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email and password are required',
+        message: 'Please provide email and password',
       });
     }
 
-    // Find user and select password
     const user = await User.findOne({ email }).select('+password');
-
     if (!user) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
-        message: 'Invalid email or password',
+        message: 'Invalid credentials',
       });
     }
 
-    // Compare password
-    const isPasswordMatch = await user.matchPassword(password);
-
-    if (!isPasswordMatch) {
-      return res.status(400).json({
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({
         success: false,
-        message: 'Invalid email or password',
+        message: 'Invalid credentials',
       });
     }
 
-    // Generate token directly
     const token = generateToken(user._id, user.role);
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      message: 'Login successful',
       token,
       user: {
         id: user._id,
@@ -250,183 +102,7 @@ exports.loginUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message,
-    });
-  }
-};
-
-// @desc    Verify Login OTP and complete login
-// @route   POST /api/auth/login-verify
-// @access  Public
-exports.verifyLoginOTP = async (req, res) => {
-  try {
-    const { userId, otp } = req.body;
-
-    if (!userId || !otp) {
-      return res.status(400).json({
-        success: false,
-        message: 'User ID and OTP are required',
-      });
-    }
-
-    // Find user
-    const user = await User.findById(userId).select('+otp +otpExpires');
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
-    }
-
-    // Verify OTP
-    const verification = verifyOTP(user.otp, otp, user.otpExpires);
-
-    if (!verification.valid) {
-      return res.status(400).json({
-        success: false,
-        message: verification.message,
-      });
-    }
-
-    // Clear OTP fields
-    user.otp = undefined;
-    user.otpExpires = undefined;
-    await user.save();
-
-    // Generate token
-    const token = generateToken(user._id, user.role);
-
-    return res.status(200).json({
-      success: true,
-      message: 'Login successful',
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    console.error('Verify Login OTP error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message,
-    });
-  }
-};
-
-// @desc    Forgot Password - Send OTP
-// @route   POST /api/auth/forgot-password
-// @access  Public
-exports.forgotPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required',
-      });
-    }
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
-    }
-
-    // For demo purposes, we skip OTP generation and just say it's sent
-    return res.status(200).json({
-      success: true,
-      message: 'Password reset feature simulated. Use any 6-digit OTP (e.g., 123456) to reset.',
-      email,
-    });
-  } catch (error) {
-    console.error('Forgot password error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message,
-    });
-  }
-};
-
-// @desc    Reset Password with OTP
-// @route   POST /api/auth/reset-password
-// @access  Public
-exports.resetPassword = async (req, res) => {
-  try {
-    const { email, otp, newPassword } = req.body;
-
-    if (!email || !otp || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email, OTP, and new password are required',
-      });
-    }
-
-    if (newPassword.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password must be at least 6 characters',
-      });
-    }
-
-    const user = await User.findOne({ email }).select(
-      '+resetPasswordOTP +resetPasswordOTPExpires'
-    );
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
-    }
-
-    // Skip OTP verification for demo
-    /*
-    const verification = verifyOTP(
-      user.resetPasswordOTP,
-      otp,
-      user.resetPasswordOTPExpires
-    );
-
-    if (!verification.valid) {
-      return res.status(400).json({
-        success: false,
-        message: verification.message,
-      });
-    }
-    */
-
-    // Update password
-    user.password = newPassword;
-    user.resetPasswordOTP = undefined;
-    user.resetPasswordOTPExpires = undefined;
-    await user.save();
-
-    return res.status(200).json({
-      success: true,
-      message: 'Password reset successfully (OTP verification skipped for demo)',
-    });
-  } catch (error) {
-    console.error('Reset password error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -436,17 +112,28 @@ exports.resetPassword = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
-
-    return res.status(200).json({
-      success: true,
-      user,
-    });
+    res.status(200).json({ success: true, user });
   } catch (error) {
-    console.error('Get user error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
+};
+
+// @desc    Forgot Password (Simulated)
+// @route   POST /api/auth/forgot-password
+// @access  Public
+exports.forgotPassword = async (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Password reset feature currently disabled. Contact support.'
+  });
+};
+
+// @desc    Reset Password (Simulated)
+// @route   POST /api/auth/reset-password
+// @access  Public
+exports.resetPassword = async (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Password reset feature currently disabled. Contact support.'
+  });
 };

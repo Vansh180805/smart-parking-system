@@ -25,36 +25,16 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       const response = await authService.register({ name, email, phone, password });
-
-      // If the backend returns token and user (auto-login after registration)
-      if (response.data.token && response.data.user) {
-        const { token, user } = response.data;
-        setToken(token);
-        setUser(user);
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-      }
-
-      return response.data;
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Registration failed';
-      setError(errorMessage);
-      throw err;
-    }
-  };
-
-  const verifyOTP = async (userId, otp) => {
-    try {
-      setError(null);
-      const response = await authService.verifyOTP({ userId, otp });
+      
       const { token, user } = response.data;
       setToken(token);
       setUser(user);
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+      
       return response.data;
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'OTP verification failed';
+      const errorMessage = err.response?.data?.message || 'Registration failed';
       setError(errorMessage);
       throw err;
     }
@@ -64,37 +44,16 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       const response = await authService.login({ email, password });
-
-      // If OTP is required, don't set user yet
-      if (response.data.requireOTP) {
-        return response.data;
-      }
-
+      
       const { token, user } = response.data;
       setToken(token);
       setUser(user);
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+      
       return response.data;
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Login failed';
-      setError(errorMessage);
-      throw err;
-    }
-  };
-
-  const verifyLoginOTP = async (userId, otp) => {
-    try {
-      setError(null);
-      const response = await authService.verifyLoginOTP({ userId, otp });
-      const { token, user } = response.data;
-      setToken(token);
-      setUser(user);
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      return response.data;
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || 'OTP verification failed';
       setError(errorMessage);
       throw err;
     }
@@ -113,9 +72,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     error,
     register,
-    verifyOTP,
     login,
-    verifyLoginOTP,
     logout,
     isAuthenticated: !!token,
     isAdmin: user?.role === 'admin',

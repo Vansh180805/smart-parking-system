@@ -11,6 +11,8 @@ const razorpay = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy_secret',
 });
 
+console.log('🔍 RAZORPAY INITIALIZED WITH KEY_ID:', process.env.RAZORPAY_KEY_ID ? `[${process.env.RAZORPAY_KEY_ID}]` : 'MISSING');
+
 // @desc    Create Razorpay Order
 // @route   POST /api/payments/create-order
 // @access  Private
@@ -33,20 +35,21 @@ exports.createOrder = async (req, res) => {
             amount = booking.bookingAmount;
         }
 
-        if (amount <= 0) {
+        if (isNaN(amount) || amount <= 0) {
+            console.error(`❌ INVALID AMOUNT for Booking ${bookingId}: ${amount}`);
             return res.status(400).json({
                 success: false,
-                message: 'Invalid payment amount',
+                message: 'Invalid payment amount ($' + amount + ')',
             });
         }
 
-        const amountInPaise = Math.round(amount * 100);
+        const amountInPaise = Math.round(parseFloat(amount) * 100);
         console.log(`💰 Generating order for Booking: ${bookingId}, Amount: ₹${amount} (${amountInPaise} paise)`);
 
         const options = {
             amount: amountInPaise,
             currency: 'INR',
-            receipt: `receipt_${booking._id.toString().slice(-6)}_${Date.now()}`,
+            receipt: `rcpt_${Date.now().toString().slice(-8)}`,
             notes: {
                 bookingId: booking._id.toString(),
                 type: type
@@ -54,6 +57,11 @@ exports.createOrder = async (req, res) => {
         };
 
         const order = await razorpay.orders.create(options);
+        
+        // Log to payment.log
+        const fs = require('fs');
+        const logMsg = `[${new Date().toISOString()}] SUCCESS: Order ${order.id} created for Booking ${bookingId}. Amount: ${order.amount}\n`;
+        fs.appendFileSync('payment.log', logMsg);
         console.log('✅ Razorpay Order Created:', order.id);
 
         // Save order ID to booking for verification
@@ -70,10 +78,16 @@ exports.createOrder = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('❌ Create Razorpay Order Error:', error);
+        console.error('❌ Create Payment Order Error:', error);
+        
+        // Log to payment.log
+        const fs = require('fs');
+        const logMsg = `[${new Date().toISOString()}] ERROR creating order for Booking ${req.body?.bookingId}: ${error.message}\n`;
+        fs.appendFileSync('payment.log', logMsg);
+
         return res.status(500).json({
             success: false,
-            message: error.description || 'Failed to create payment order',
+            message: 'Error creating payment order',
             error: error.message,
         });
     }
@@ -91,6 +105,12 @@ exports.verifyPayment = async (req, res) => {
             bookingId,
             type // 'BOOKING' or 'FINE'
         } = req.body;
+
+        // Log Verify Attempt Start
+        const fs = require('fs');
+        const startLogMsg = `[${new Date().toISOString()}] VERIFY START: Order ${razorpay_order_id}, Booking ${bookingId}, Type ${type}\n`;
+        fs.appendFileSync('payment.log', startLogMsg);
+        console.log(`🔥 VERIFY API HIT: ${razorpay_order_id} for ${bookingId}`);
 
         const sign = razorpay_order_id + "|" + razorpay_payment_id;
         const secret = process.env.RAZORPAY_KEY_SECRET || 'dummy_secret';
@@ -131,30 +151,20 @@ exports.verifyPayment = async (req, res) => {
                 booking.bookingStatus = 'confirmed';
                 amountPaid = booking.bookingAmount;
 
-                // Update Slot status
+                // Slot status updated - Should be 'reserved' until they actually park
                 const slot = await Slot.findById(booking.slotId);
                 if (slot) {
-                    slot.status = 'occupied';
+                    slot.status = 'reserved';
                     slot.currentBookingId = booking._id;
                     await slot.save();
                 }
-
-                // Send Confirmation Email (Nodemailer)
-                try {
-                    const { sendBookingConfirmation } = require('../utils/emailSender');
-                    // Fetch user and parking for email
-                    const User = require('../models/User');
-                    const ParkingLot = require('../models/ParkingLot');
-                    const user = await User.findById(booking.userId);
-                    const parking = await ParkingLot.findById(booking.parkingId);
-                    await sendBookingConfirmation(booking, user, parking, slot);
-                } catch (emailError) {
-                    console.error('Failed to send confirmation email:', emailError);
-                }
+                
+                console.log(`📧 [EMAIL SIMULATION]: Booking confirmation would be sent to: ${booking.userId?.email || 'user'}`);
             }
 
             booking.razorpayPaymentId = razorpay_payment_id;
             booking.totalPaid = (booking.totalPaid || 0) + amountPaid;
+            booking.paymentMethod = 'razorpay';
             await booking.save();
 
             // Create Payment Record
@@ -163,11 +173,17 @@ exports.verifyPayment = async (req, res) => {
                 userId: booking.userId._id,
                 amount: amountPaid,
                 paymentType: type === 'FINE' ? 'fine' : 'booking',
+                paymentMethod: 'card', // Or dynamically set from razorpay response if needed
                 status: 'completed',
                 transactionId: razorpay_payment_id,
                 razorpayOrderId: razorpay_order_id,
                 razorpayPaymentId: razorpay_payment_id
             });
+
+            // Log Success
+            const fs = require('fs');
+            const logMsg = `[${new Date().toISOString()}] VERIFIED: Payment ${razorpay_payment_id} for Booking ${bookingId} (${type})\n`;
+            fs.appendFileSync('payment.log', logMsg);
 
             return res.status(200).json({
                 success: true,
