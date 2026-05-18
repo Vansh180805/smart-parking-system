@@ -2,11 +2,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { staffService } from '../../services/api';
+import { useTheme } from '../../context/ThemeContext';
+import { 
+  ShieldCheck, Check, X, AlertTriangle, ClipboardList, 
+  ParkingCircle, ScanLine, Rocket, LogOut, Info,
+  PackageOpen, Bike, Truck, Car, Tractor, LayoutDashboard
+} from 'lucide-react';
 import '../../styles/StaffDashboard.css';
 
 const StaffDashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { theme } = useTheme();
 
   const [tab, setTab] = useState('pending'); // pending, parked, verify
   const [pendingEntries, setPendingEntries] = useState([]);
@@ -268,16 +275,28 @@ const StaffDashboard = () => {
   };
 
   return (
-    <div className="staff-dashboard">
+    <div className={`staff-dashboard ${theme}`}>
       <div className="staff-header">
+        <div className="header-bg-glow" />
         <div className="header-content">
           <div className="header-intro">
-            <h1>Staff Verification Panel 👮</h1>
-            <p>Verify vehicle entry and manage parking</p>
+            <span className="header-eyebrow">
+              <ShieldCheck size={12} strokeWidth={1.5} /> Staff Operations
+            </span>
+            <h1>Staff Verification Panel</h1>
+            <p>Verify vehicle entry and manage parking.</p>
           </div>
-          <button className="logout-btn" onClick={handleLogout}>
-            Logout
-          </button>
+          <div className="header-actions">
+            <button 
+              className="switch-btn" 
+              onClick={() => navigate('/admin/dashboard')}
+            >
+              <LayoutDashboard size={16} /> Dashboard
+            </button>
+            <button className="logout-btn" onClick={handleLogout}>
+              <LogOut size={16} /> Logout
+            </button>
+          </div>
         </div>
       </div>
 
@@ -286,7 +305,7 @@ const StaffDashboard = () => {
         {verificationResult && (
           <div className={`result-banner ${verificationResult.success ? 'success' : 'error'}`}>
             <span className="result-icon">
-              {verificationResult.success ? '✅' : '❌'}
+              {verificationResult.success ? <Check size={20} /> : <X size={20} />}
             </span>
             <span>{verificationResult.message}</span>
           </div>
@@ -294,9 +313,9 @@ const StaffDashboard = () => {
 
         {error && (
           <div className="error-banner">
-            <span>⚠️</span>
+            <span><AlertTriangle size={18} /></span>
             <span>{error}</span>
-            <button onClick={() => setError('')}>✕</button>
+            <button onClick={() => setError('')}><X size={16} /></button>
           </div>
         )}
 
@@ -306,21 +325,21 @@ const StaffDashboard = () => {
             className={`tab-btn ${tab === 'pending' ? 'active' : ''}`}
             onClick={() => setTab('pending')}
           >
-            📋 Pending Entries
+            <ClipboardList size={18} className="inline-icon" /> Pending Entries
             <span className="count">{pendingEntries.length}</span>
           </button>
           <button
             className={`tab-btn ${tab === 'parked' ? 'active' : ''}`}
             onClick={() => setTab('parked')}
           >
-            🅿️ Parked Vehicles
+            <ParkingCircle size={18} className="inline-icon" /> Parked Vehicles
             <span className="count">{parkedVehicles.length}</span>
           </button>
           <button
             className={`tab-btn ${tab === 'verify' ? 'active' : ''}`}
             onClick={() => setTab('verify')}
           >
-            🔐 Scan QR Code
+            <ScanLine size={18} className="inline-icon" /> Scan QR Code
           </button>
         </div>
 
@@ -328,11 +347,11 @@ const StaffDashboard = () => {
         {tab === 'verify' && (
           <div className="verify-section">
             <div className="qr-scanner">
-              <div className="qr-icon">🔐</div>
+              <div className="qr-icon"><ScanLine size={32} /></div>
               <h2>Scan Booking QR</h2>
               <p>Paste the QR data string to lookup booking</p>
 
-              <form className="qr-form" onSubmit={handleLookupBooking} style={{ display: 'flex', gap: '12px', maxWidth: '500px', margin: '0 auto 30px' }}>
+              <form className="qr-form" onSubmit={handleLookupBooking}>
                 <input
                   type="text"
                   className="qr-input"
@@ -340,102 +359,61 @@ const StaffDashboard = () => {
                   value={qrInput}
                   onChange={(e) => setQrInput(e.target.value)}
                   disabled={loading}
-                  style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
                 />
-                <button type="submit" className="scan-btn" disabled={loading || !qrInput} style={{ padding: '12px 24px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+                <button type="submit" className="scan-btn" disabled={loading || !qrInput}>
                   {loading ? 'Searching...' : 'Lookup'}
                 </button>
               </form>
 
               {lookupResult && (
-                <div className="lookup-preview-card" style={{
-                  background: '#f0f9ff',
-                  border: '2px solid #0ea5e9',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  maxWidth: '600px',
-                  margin: '0 auto 30px',
-                  textAlign: 'left',
-                  boxShadow: '0 10px 25px rgba(14,165,233, 0.15)'
-                }}>
+                <div className="lookup-preview-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                    <h3 style={{ color: '#0369a1', margin: 0 }}>Booking Details Found! ✅</h3>
-                    <span style={{
-                      padding: '4px 12px',
-                      background: '#e0f2fe',
-                      color: '#0369a1',
-                      borderRadius: '20px',
-                      fontSize: '0.8rem',
-                      fontWeight: 700
-                    }}>{lookupResult.bookingStatus.toUpperCase()}</span>
+                    <h3>Booking Details Found! <Check size={20} color="#10b981" /></h3>
+                    <span className="status-badge-preview">{lookupResult.bookingStatus.toUpperCase()}</span>
                   </div>
 
-                  <div className="preview-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                  <div className="preview-grid">
                     <div className="preview-item">
-                      <label style={{ color: '#64748b', fontSize: '0.8rem', display: 'block', fontWeight: 600 }}>USER</label>
-                      <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>{lookupResult.userId?.name}</span>
+                      <label>USER</label>
+                      <span>{lookupResult.userId?.name}</span>
                     </div>
                     <div className="preview-item">
-                      <label style={{ color: '#64748b', fontSize: '0.8rem', display: 'block', fontWeight: 600 }}>VEHICLE NUMBER</label>
-                      <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1e293b' }}>{lookupResult.vehicleNumber}</span>
+                      <label>VEHICLE NUMBER</label>
+                      <span>{lookupResult.vehicleNumber}</span>
+                    </div>
+                    <div className="preview-item blue">
+                      <label>ASSIGNED SLOT</label>
+                      <span>{lookupResult.slotId?.slotNumber}</span>
                     </div>
                     <div className="preview-item">
-                      <label style={{ color: '#64748b', fontSize: '0.8rem', display: 'block', fontWeight: 600 }}>ASSIGNED SLOT</label>
-                      <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#0369a1' }}>{lookupResult.slotId?.slotNumber}</span>
-                    </div>
-                    <div className="preview-item">
-                      <label style={{ color: '#64748b', fontSize: '0.8rem', display: 'block', fontWeight: 600 }}>VEHICLE TYPE</label>
-                      <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>{lookupResult.vehicleType}</span>
+                      <label>VEHICLE TYPE</label>
+                      <span>{lookupResult.vehicleType}</span>
                     </div>
                   </div>
 
-                  <div className="action-container" style={{ marginTop: '25px', paddingTop: '20px', borderTop: '1px dashed #bae6fd' }}>
+                  <div className="action-container">
                     {lookupResult.bookingStatus === 'confirmed' ? (
                       <button
                         onClick={handleConfirmEntry}
                         className="confirm-park-btn"
-                        style={{
-                          width: '100%',
-                          padding: '16px',
-                          background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '12px',
-                          fontWeight: 800,
-                          fontSize: '1rem',
-                          cursor: 'pointer',
-                          boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
-                        }}
                       >
-                        🚀 ALLOW ENTRY & MARK PARKED
+                        <Rocket size={18} /> ALLOW ENTRY & MARK PARKED
                       </button>
                     ) : lookupResult.bookingStatus === 'parked' ? (
                       <div style={{ textAlign: 'center' }}>
-                        <p style={{ color: '#0369a1', fontWeight: 600, marginBottom: '15px' }}>
-                          ℹ️ Vehicle is currently parked. Ready for exit?
+                        <p style={{ color: 'inherit', fontWeight: 600, marginBottom: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                          <Info size={16} /> Vehicle is currently parked. Ready for exit?
                         </p>
                         <button
                           onClick={() => handleMarkUnparked(lookupResult._id)}
                           className="exit-park-btn"
-                          style={{
-                            width: '100%',
-                            padding: '16px',
-                            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '12px',
-                            fontWeight: 800,
-                            fontSize: '1rem',
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
-                          }}
                         >
-                          🚪 EXIT VEHICLE & CALCULATE FINE
+                          <LogOut size={18} /> EXIT VEHICLE & CALCULATE FINE
                         </button>
                       </div>
                     ) : (
-                      <div style={{ color: '#dc2626', fontWeight: 700, textAlign: 'center' }}>
-                        ⚠️ This vehicle is already marked as {lookupResult.bookingStatus}.
+                      <div style={{ color: '#dc2626', fontWeight: 700, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                        <AlertTriangle size={16} /> This vehicle is already marked as {lookupResult.bookingStatus}.
                       </div>
                     )}
                   </div>
@@ -467,7 +445,7 @@ const StaffDashboard = () => {
           <div className="entries-section">
             {pendingEntries.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-icon">📭</div>
+                <div className="empty-icon"><PackageOpen size={56} strokeWidth={1.5} color="rgba(167, 139, 250, 0.72)" /></div>
                 <h3>No Pending Entries</h3>
                 <p>All bookings have been verified or there are no pending entries</p>
               </div>
@@ -477,10 +455,10 @@ const StaffDashboard = () => {
                   <div key={entry._id} className="entry-card">
                     <div className="entry-header">
                       <div className="vehicle-badge">
-                        {entry.vehicleType === 'twoWheeler' && '🏍️'}
-                        {entry.vehicleType === 'threeWheeler' && '🛺'}
-                        {entry.vehicleType === 'fourWheeler' && '🚗'}
-                        {entry.vehicleType === 'heavyVehicle' && '🚚'}
+                        {entry.vehicleType === 'twoWheeler' && <Bike size={18} />}
+                        {entry.vehicleType === 'threeWheeler' && <Tractor size={18} />}
+                        {entry.vehicleType === 'fourWheeler' && <Car size={18} />}
+                        {entry.vehicleType === 'heavyVehicle' && <Truck size={18} />}
                       </div>
                       <span className="status-badge pending">Pending</span>
                     </div>
@@ -525,7 +503,7 @@ const StaffDashboard = () => {
           <div className="parked-section">
             {parkedVehicles.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-icon">🅿️</div>
+                <div className="empty-icon"><ParkingCircle size={56} strokeWidth={1.5} color="rgba(167, 139, 250, 0.72)" /></div>
                 <h3>No Parked Vehicles</h3>
                 <p>No vehicles are currently parked</p>
               </div>
@@ -535,10 +513,10 @@ const StaffDashboard = () => {
                   <div key={vehicle._id} className="parked-card">
                     <div className="parked-header">
                       <div className="vehicle-badge">
-                        {vehicle.vehicleType === 'twoWheeler' && '🏍️'}
-                        {vehicle.vehicleType === 'threeWheeler' && '🛺'}
-                        {vehicle.vehicleType === 'fourWheeler' && '🚗'}
-                        {vehicle.vehicleType === 'heavyVehicle' && '🚚'}
+                        {vehicle.vehicleType === 'twoWheeler' && <Bike size={18} />}
+                        {vehicle.vehicleType === 'threeWheeler' && <Tractor size={18} />}
+                        {vehicle.vehicleType === 'fourWheeler' && <Car size={18} />}
+                        {vehicle.vehicleType === 'heavyVehicle' && <Truck size={18} />}
                       </div>
                       <span className="status-badge parked">Parked</span>
                     </div>

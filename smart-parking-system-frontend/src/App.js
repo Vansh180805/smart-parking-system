@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 // Auth Pages
 import Login from './pages/Auth/Login';
@@ -59,7 +60,7 @@ const RedirectToDashboard = () => {
     return <Navigate to="/staff/dashboard" replace />;
   }
 
-  return <Navigate to="/bookings" replace />;
+  return <Navigate to="/home" replace />;
 };
 
 // Main App Routes
@@ -157,21 +158,30 @@ const AppRoutes = () => {
   );
 };
 
-
+// Get Client ID from Env
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 // Main App Component
 function App() {
+  if (!GOOGLE_CLIENT_ID) {
+    console.warn("⚠️ REACT_APP_GOOGLE_CLIENT_ID is missing from .env file. Google Login will not function.");
+  }
+
   return (
-    <Router>
-      <AuthProvider>
-        <ThemeProvider>
-          <div className="app-container">
-            <Navbar />
-            <AppRoutes />
-          </div>
-        </ThemeProvider>
-      </AuthProvider>
-    </Router>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || ""}>
+      <Router>
+        <AuthProvider>
+          <ThemeProvider>
+            <div className="app-container">
+              <div className="global-bg-gradient"></div>
+              <div className="global-bg-glow"></div>
+              <Navbar />
+              <AppRoutes />
+            </div>
+          </ThemeProvider>
+        </AuthProvider>
+      </Router>
+    </GoogleOAuthProvider>
   );
 }
 

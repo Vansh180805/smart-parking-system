@@ -1,4 +1,14 @@
 import React from 'react';
+import {
+  Bike,
+  Car,
+  Truck,
+  Tractor,
+  CheckCircle2,
+  XCircle,
+  Lock,
+  Wrench,
+} from 'lucide-react';
 import '../styles/SlotGrid.css';
 
 const SlotGrid = ({ slots, onSlotSelect, vehicleType, selectedSlot }) => {
@@ -9,32 +19,6 @@ const SlotGrid = ({ slots, onSlotSelect, vehicleType, selectedSlot }) => {
     return 'maintenance';
   };
 
-  const getSlotColor = (status) => {
-    switch (status) {
-      case 'available':
-        return '#10b981';
-      case 'occupied':
-        return '#ef4444';
-      case 'reserved':
-        return '#f59e0b';
-      default:
-        return '#9ca3af';
-    }
-  };
-
-  const getSlotIcon = (status) => {
-    switch (status) {
-      case 'available':
-        return '✓';
-      case 'occupied':
-        return '✖'; // Heavier X
-      case 'reserved':
-        return '🔒'; // Lock icon for reserved
-      default:
-        return '⚠';
-    }
-  };
-
   const groupedSlots = slots.reduce((acc, slot) => {
     if (!acc[slot.slotType]) acc[slot.slotType] = [];
     acc[slot.slotType].push(slot);
@@ -42,85 +26,112 @@ const SlotGrid = ({ slots, onSlotSelect, vehicleType, selectedSlot }) => {
   }, {});
 
   const vehicleTypeLabels = {
-    twoWheeler: '🏍️ 2-Wheelers',
-    threeWheeler: '🛺 3-Wheelers',
-    fourWheeler: '🚗 4-Wheelers',
-    heavyVehicle: '🚚 Heavy Vehicles',
+    twoWheeler:   '2-Wheelers',
+    threeWheeler: '3-Wheelers',
+    fourWheeler:  '4-Wheelers',
+    heavyVehicle: 'Heavy Vehicles',
+  };
+
+  const vehicleTypeIcons = {
+    twoWheeler:   <Bike size={14} strokeWidth={1.5} />,
+    threeWheeler: <Tractor size={14} strokeWidth={1.5} />,
+    fourWheeler:  <Car size={14} strokeWidth={1.5} />,
+    heavyVehicle: <Truck size={14} strokeWidth={1.5} />,
   };
 
   const stats = {
-    total: slots.length,
+    total:     slots.length,
     available: slots.filter((s) => s.status === 'available').length,
-    occupied: slots.filter((s) => s.status === 'occupied').length,
-    reserved: slots.filter((s) => s.status === 'reserved').length,
+    occupied:  slots.filter((s) => s.status === 'occupied').length,
+    reserved:  slots.filter((s) => s.status === 'reserved').length,
   };
 
   return (
     <div className="slot-grid-container">
-      <div className="slot-statistics">
-        <div className="stat-card">
-          <h3>Total Slots</h3>
-          <p className="stat-value">{stats.total}</p>
+
+      {/* ── Mini stat strip ───────────────────────────────── */}
+      <div className="slot-stats-strip">
+        <div className="strip-item">
+          <span className="strip-dot total" />
+          <span className="strip-count">{stats.total}</span>
+          <span className="strip-label">Total</span>
         </div>
-        <div className="stat-card available">
-          <h3>Available</h3>
-          <p className="stat-value">{stats.available}</p>
+        <div className="strip-item">
+          <span className="strip-dot available" />
+          <span className="strip-count">{stats.available}</span>
+          <span className="strip-label">Available</span>
         </div>
-        <div className="stat-card occupied">
-          <h3>Occupied</h3>
-          <p className="stat-value">{stats.occupied}</p>
+        <div className="strip-item">
+          <span className="strip-dot occupied" />
+          <span className="strip-count">{stats.occupied}</span>
+          <span className="strip-label">Occupied</span>
         </div>
-        <div className="stat-card reserved">
-          <h3>Reserved</h3>
-          <p className="stat-value">{stats.reserved}</p>
+        <div className="strip-item">
+          <span className="strip-dot reserved" />
+          <span className="strip-count">{stats.reserved}</span>
+          <span className="strip-label">Reserved</span>
         </div>
       </div>
 
+      {/* ── Legend ───────────────────────────────────────── */}
       <div className="legend">
         <div className="legend-item">
-          <span className="legend-color" style={{ backgroundColor: '#10b981' }}></span>
+          <span className="status-dot available" />
           <span>Available</span>
         </div>
         <div className="legend-item">
-          <span className="legend-color" style={{ backgroundColor: '#ef4444' }}></span>
+          <XCircle size={14} className="status-icon occupied" />
           <span>Occupied</span>
         </div>
         <div className="legend-item">
-          <span className="legend-color" style={{ backgroundColor: '#f59e0b' }}></span>
+          <Lock size={14} className="status-icon reserved" />
           <span>Reserved</span>
         </div>
         <div className="legend-item">
-          <span className="legend-color" style={{ backgroundColor: '#9ca3af' }}></span>
+          <Wrench size={14} className="status-icon maintenance" />
           <span>Maintenance</span>
         </div>
       </div>
 
+      {/* ── Slot sections ─────────────────────────────────── */}
       {Object.entries(groupedSlots).map(([type, typeSlots]) => (
         <div key={type} className="slot-section">
-          <h2 className="section-title">{vehicleTypeLabels[type]}</h2>
+          <h2 className="section-title">
+            {vehicleTypeIcons[type]}
+            {vehicleTypeLabels[type]}
+          </h2>
+
           <div className="slots-grid">
             {typeSlots.map((slot) => {
               const status = getSlotStatus(slot);
               const isSelectable = status === 'available';
               const isSelected = selectedSlot?.id === slot.id;
+              const isUnavailable = status === 'occupied' || status === 'reserved' || status === 'maintenance';
 
               return (
                 <button
                   key={slot.id}
-                  className={`slot-card ${status} ${isSelected ? 'selected' : ''}`}
+                  className={`slot-card ${status} ${isSelected ? 'selected' : ''} ${isUnavailable ? 'unavailable' : ''}`}
                   onClick={() => isSelectable && onSlotSelect(slot)}
-                  disabled={!isSelectable && status !== 'occupied'} // Allow clicking occupied to see info maybe? but disable for now as per req
-                  style={{
-                    backgroundColor: isSelected ? getSlotColor(status) : 'transparent',
-                    borderColor: getSlotColor(status),
-                    color: isSelected ? 'white' : getSlotColor(status)
-                  }}
+                  disabled={!isSelectable && status !== 'occupied'}
+                  title={`Slot ${slot.slotNumber} — ${status}`}
                 >
+                  {status === 'available' ? (
+                    <span className="status-dot available" />
+                  ) : (
+                    (() => {
+                      const StatusIcon = {
+                        occupied: XCircle,
+                        reserved: Lock,
+                        maintenance: Wrench
+                      }[status];
+                      return <StatusIcon size={14} className={`status-icon ${status}`} />;
+                    })()
+                  )}
+
                   <div className="slot-number">{slot.slotNumber}</div>
-                  <div className="slot-icon" style={{ color: status === 'occupied' ? '#ef4444' : 'inherit' }}>
-                    {getSlotIcon(status)}
-                  </div>
-                  <div className="slot-status">{status}</div>
+
+                  <div className="slot-status-text">{status}</div>
                 </button>
               );
             })}
@@ -128,14 +139,19 @@ const SlotGrid = ({ slots, onSlotSelect, vehicleType, selectedSlot }) => {
         </div>
       ))}
 
+      {/* ── Selected Slot Info ─────────────────────────────── */}
       {selectedSlot && (
         <div className="selected-slot-info">
-          <p>
-            <strong>Selected Slot:</strong> {selectedSlot.slotNumber}
-          </p>
-          <p>
-            <strong>Type:</strong> {vehicleTypeLabels[selectedSlot.slotType]}
-          </p>
+          <CheckCircle2 size={16} strokeWidth={1.5} className="selected-check" />
+          <div>
+            <p className="selected-slot-label">Selected Slot</p>
+            <p className="selected-slot-value">
+              {selectedSlot.slotNumber}
+              <span className="selected-slot-type">
+                {vehicleTypeLabels[selectedSlot.slotType]}
+              </span>
+            </p>
+          </div>
         </div>
       )}
     </div>

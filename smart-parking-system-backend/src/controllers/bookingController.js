@@ -369,6 +369,57 @@ exports.getUserBookings = async (req, res) => {
   }
 };
 
+// @desc    Get single booking by ID
+// @route   GET /api/bookings/:bookingId
+// @access  Private
+exports.getBookingById = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const userId = req.user.userId;
+
+    // Validate ObjectId
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid booking ID format',
+      });
+    }
+
+    const booking = await Booking.findById(bookingId)
+      .populate('parkingId', 'name address city location hourlyRate overStayFinePerHour')
+      .populate('slotId', 'slotNumber slotType status');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found',
+      });
+    }
+
+    // Security check: only the owner or staff/admin can view it
+    if (booking.userId.toString() !== userId && req.user.role === 'user') {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized access to this booking',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: booking,
+    });
+  } catch (error) {
+    console.error('Get booking by ID error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+
+
 // @desc    Cancel booking
 // @route   POST /api/bookings/:bookingId/cancel
 // @access  Private

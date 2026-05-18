@@ -1,5 +1,8 @@
+const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Generate JWT Token
 const generateToken = (userId, role) => {
@@ -103,6 +106,66 @@ exports.loginUser = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Google Login
+// @route   POST /api/auth/google
+// @access  Public
+exports.googleLogin = async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    // Verify Google Token
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    
+    const payload = ticket.getPayload();
+    const { email, name, picture, sub: googleId } = payload;
+
+    // Check if user exists
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create new user if not exists
+      // Note: Generating a random phone and password to satisfy schema
+      const randomPassword = Math.random().toString(36).slice(-10);
+      const placeholderPhone = `G-${googleId.slice(-8)}`;
+      
+      user = await User.create({
+        name,
+        email,
+        phone: placeholderPhone,
+        password: randomPassword,
+        profileImage: picture,
+        isVerified: true
+      });
+      console.log(`🆕 Created new Google user: ${email}`);
+    }
+
+    const jwtToken = generateToken(user._id, user.role);
+
+    res.status(200).json({
+      success: true,
+      token: jwtToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        profileImage: user.profileImage
+      },
+    });
+  } catch (error) {
+    console.error('❌ Google Auth Error:', error);
+    res.status(401).json({
+      success: false,
+      message: 'Google authentication failed',
+      error: error.message
+    });
   }
 };
 

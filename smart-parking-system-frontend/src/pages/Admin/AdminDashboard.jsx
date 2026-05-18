@@ -14,10 +14,17 @@ import {
   Legend,
   ResponsiveContainer,
   Cell,
+  ReferenceLine,
 } from 'recharts';
 import { adminService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { 
+  LayoutDashboard, ShieldAlert, Moon, Sun, RefreshCw, LogOut, 
+  Car, CheckCircle, DollarSign, AlertTriangle, MapPin, ParkingCircle, 
+  PieChart as PieChartIcon, TrendingUp, CalendarDays, Clock, 
+  Building2, ClipboardList, MessageSquare, Star
+} from 'lucide-react';
 import '../../styles/AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -36,7 +43,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const COLORS = ['#667eea', '#764ba2', '#f093fb', '#4facfe'];
+  const COLORS = ['#8B5CF6', '#7c3aed', '#a855f7', '#6d28d9'];
 
   useEffect(() => {
     fetchDashboardData();
@@ -88,15 +95,21 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="admin-dashboard-loading">
-        <div className="spinner"></div>
-        <p>Loading dashboard...</p>
+      <div className={`admin-dashboard ${theme}`}>
+        <div className="admin-dashboard-loading">
+          <div className="spinner"></div>
+          <p>Loading dashboard...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
-    return <div className="admin-dashboard-error">{error}</div>;
+    return (
+      <div className={`admin-dashboard ${theme}`}>
+        <div className="admin-dashboard-error">{error}</div>
+      </div>
+    );
   }
 
   // Prepare fine distribution data
@@ -105,46 +118,54 @@ const AdminDashboard = () => {
     { name: 'Fine Revenue', value: summary?.totalFineRevenue || 0 },
   ];
 
+  const isDark = theme === 'dark';
+  const axisColor = isDark ? '#d1d5db' : '#6b7280';
+  const gridColor = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)';
+  const tooltipStyle = {
+    backgroundColor: isDark ? 'rgba(14,14,20,0.95)' : 'rgba(255,255,255,0.95)',
+    border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`,
+    borderRadius: '12px',
+    color: isDark ? '#f4f4f6' : '#1f2937',
+    boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.4)' : '0 8px 32px rgba(0,0,0,0.08)',
+  };
+
   return (
     <div className={`admin-dashboard ${theme}`}>
       <div className="dashboard-header">
-        <h1>📊 Admin Dashboard</h1>
-        <div className="header-actions">
+        <div className="header-bg-glow" />
+        <div className="header-content">
+          <div className="header-intro">
+            <span className="header-eyebrow">
+              <LayoutDashboard size={12} strokeWidth={1.5} /> Admin Control Panel
+            </span>
+            <h1>Admin Dashboard</h1>
+            <p>Manage parking slots, revenue, and system settings.</p>
+          </div>
+          <div className="header-actions">
+          <button
+            className="switch-btn staff-panel-btn"
+            onClick={() => navigate('/staff/dashboard')}
+          >
+            <ShieldAlert size={16} /> Staff Panel
+          </button>
           <button
             className="switch-btn"
-            onClick={() => navigate('/staff/dashboard')}
-            style={{
-              padding: '10px 18px',
-              backgroundColor: '#6366f1',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              textDecoration: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
+            onClick={fetchDashboardData}
           >
-            👮 Staff Panel
-          </button>
-          <button className="theme-toggle-btn" onClick={toggleTheme} title="Toggle Theme">
-            {theme === 'light' ? '🌙' : '☀️'}
-          </button>
-          <button className="refresh-btn" onClick={fetchDashboardData}>
-            🔄 Refresh
+            <RefreshCw size={16} /> Refresh
           </button>
           <button className="logout-btn" onClick={logout}>
-            🚪 Logout
+            <LogOut size={16} /> Logout
           </button>
         </div>
       </div>
+    </div>
 
-      {/* KPI Cards */}
-      <div className="kpi-cards">
+      <div className="admin-container">
+        {/* KPI Cards */}
+        <div className="kpi-cards">
         <div className="kpi-card primary">
-          <div className="kpi-icon">🚗</div>
+          <div className="kpi-icon"><Car size={24} /></div>
           <div className="kpi-content">
             <p>Today's Vehicles</p>
             <h2>{summary?.vehiclesParkedToday}</h2>
@@ -152,15 +173,23 @@ const AdminDashboard = () => {
         </div>
 
         <div className="kpi-card warning">
-          <div className="kpi-icon">✓</div>
+          <div className="kpi-icon"><CheckCircle size={24} /></div>
           <div className="kpi-content">
             <p>Total Bookings</p>
             <h2>{summary?.totalBookings}</h2>
           </div>
         </div>
 
+        <div className="kpi-card secondary">
+          <div className="kpi-icon"><ParkingCircle size={24} /></div>
+          <div className="kpi-content">
+            <p>Available Slots</p>
+            <h2>{summary?.availableSlots}</h2>
+          </div>
+        </div>
+
         <div className="kpi-card info">
-          <div className="kpi-icon">💰</div>
+          <div className="kpi-icon"><DollarSign size={24} /></div>
           <div className="kpi-content">
             <p>Total Revenue</p>
             <h2>₹{summary?.totalRevenue?.toLocaleString()}</h2>
@@ -168,7 +197,7 @@ const AdminDashboard = () => {
         </div>
 
         <div className="kpi-card danger">
-          <div className="kpi-icon">⚠️</div>
+          <div className="kpi-icon"><AlertTriangle size={24} /></div>
           <div className="kpi-content">
             <p>Fine Revenue</p>
             <h2>₹{summary?.totalFineRevenue?.toLocaleString()}</h2>
@@ -176,18 +205,10 @@ const AdminDashboard = () => {
         </div>
 
         <div className="kpi-card success">
-          <div className="kpi-icon">📍</div>
+          <div className="kpi-icon"><MapPin size={24} /></div>
           <div className="kpi-content">
             <p>Occupancy Rate</p>
             <h2>{summary?.occupancyPercentage}%</h2>
-          </div>
-        </div>
-
-        <div className="kpi-card secondary">
-          <div className="kpi-icon">🅰️</div>
-          <div className="kpi-content">
-            <p>Available Slots</p>
-            <h2>{summary?.availableSlots}</h2>
           </div>
         </div>
       </div>
@@ -195,7 +216,7 @@ const AdminDashboard = () => {
       {/* Charts Section */}
       <div className="charts-section">
         <div className="chart-container">
-          <h3>🚙 Vehicle Distribution</h3>
+          <h3><Car size={20} className="inline-icon" /> Vehicle Distribution</h3>
           {vehicleStats.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -213,7 +234,7 @@ const AdminDashboard = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: isDark ? '#f4f4f6' : '#1f2937' }} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
@@ -224,7 +245,7 @@ const AdminDashboard = () => {
         </div>
 
         <div className="chart-container">
-          <h3>💵 Revenue vs Fines</h3>
+          <h3><DollarSign size={20} className="inline-icon" /> Revenue vs Fines</h3>
           {fineDistribution.some(d => d.value > 0) ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -242,7 +263,7 @@ const AdminDashboard = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
+                <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} contentStyle={tooltipStyle} itemStyle={{ color: isDark ? '#f4f4f6' : '#1f2937' }} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
@@ -256,14 +277,14 @@ const AdminDashboard = () => {
       {/* Line and Bar Charts */}
       <div className="charts-section">
         <div className="chart-container full-width">
-          <h3>📈 Daily Revenue Trend (Last 7 Days)</h3>
+          <h3><TrendingUp size={20} className="inline-icon" /> Daily Revenue Trend (Last 7 Days)</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={revenueStats}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="_id" />
-              <YAxis />
-              <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
-              <Legend />
+            <LineChart data={revenueStats} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+              <XAxis dataKey="_id" stroke={axisColor} tick={{ fill: axisColor, fontSize: 12 }} tickLine={false} axisLine={false} />
+              <YAxis stroke={axisColor} tick={{ fill: axisColor, fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
+              <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} contentStyle={tooltipStyle} />
+              <Legend wrapperStyle={{ paddingTop: '20px' }} />
               <Line
                 type="monotone"
                 dataKey="bookingRevenue"
@@ -285,17 +306,77 @@ const AdminDashboard = () => {
 
       <div className="charts-section">
         <div className="chart-container full-width">
-          <h3>📅 Booking Trends (Last 7 Days)</h3>
+          <h3><CalendarDays size={20} className="inline-icon" /> Booking Trends (Last 7 Days)</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={bookingTrends}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="_id" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="totalBookings" fill="#667eea" name="Total Bookings" />
-              <Bar dataKey="completedBookings" fill="#10b981" name="Completed" />
-              <Bar dataKey="cancelledBookings" fill="#ef4444" name="Cancelled" />
+            <BarChart 
+              data={bookingTrends.map((d, i) => ({ ...d, index: i }))} 
+              margin={{ top: 20, right: 30, left: 10, bottom: 20 }} 
+              barGap={8} 
+              barSize={50}
+            >
+              <defs>
+                <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8B5CF6" stopOpacity={1}/>
+                  <stop offset="95%" stopColor="#6D28D9" stopOpacity={1}/>
+                </linearGradient>
+                <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={1}/>
+                  <stop offset="95%" stopColor="#059669" stopOpacity={1}/>
+                </linearGradient>
+                <linearGradient id="colorCancelled" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={1}/>
+                  <stop offset="95%" stopColor="#dc2626" stopOpacity={1}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+              
+              {/* Vertical separation lines between dates */}
+              {bookingTrends.map((_, i) => (
+                i < bookingTrends.length - 1 && (
+                  <ReferenceLine 
+                    key={`sep-${i}`} 
+                    x={i + 0.5} 
+                    stroke={isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"} 
+                    strokeWidth={1}
+                  />
+                )
+              ))}
+
+              <XAxis 
+                dataKey="index" 
+                type="number"
+                domain={[-0.5, bookingTrends.length - 0.5]}
+                ticks={bookingTrends.map((_, i) => i)}
+                tickFormatter={(i) => bookingTrends[i]?._id || ''}
+                stroke={axisColor} 
+                tick={{ fill: axisColor, fontSize: 11 }} 
+                tickLine={false} 
+                axisLine={{ stroke: axisColor, strokeWidth: 1 }} 
+                dy={10} 
+              />
+              <YAxis stroke={axisColor} tick={{ fill: axisColor, fontSize: 11 }} tickLine={false} axisLine={false} />
+              <Tooltip 
+                contentStyle={tooltipStyle} 
+                cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }} 
+                borderRadius={12}
+              />
+              <Legend 
+                wrapperStyle={{ 
+                  paddingTop: '30px', 
+                  fontSize: '12px',
+                  display: 'flex',
+                  justifyContent: 'center'
+                }} 
+                iconType="circle" 
+                payload={[
+                  { value: 'Total Bookings', type: 'circle', id: 'totalBookings', color: '#8B5CF6' },
+                  { value: 'Completed', type: 'circle', id: 'completedBookings', color: '#10b981' },
+                  { value: 'Cancelled', type: 'circle', id: 'cancelledBookings', color: '#ef4444' }
+                ]}
+              />
+              <Bar dataKey="totalBookings" fill="url(#colorTotal)" name="Total Bookings" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="completedBookings" fill="url(#colorCompleted)" name="Completed" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="cancelledBookings" fill="url(#colorCancelled)" name="Cancelled" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -303,14 +384,20 @@ const AdminDashboard = () => {
 
       <div className="charts-section">
         <div className="chart-container full-width">
-          <h3>⏰ Hourly Parking Trends (Today)</h3>
+          <h3><Clock size={20} className="inline-icon" /> Hourly Parking Trends (Today)</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={hourlyTrends}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="hour" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="vehicles" fill="#764ba2" name="Vehicles Parked" />
+            <BarChart data={hourlyTrends} margin={{ top: 20, right: 30, left: 10, bottom: 20 }} barSize={50}>
+              <defs>
+                <linearGradient id="colorHourly" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8B5CF6" stopOpacity={1}/>
+                  <stop offset="95%" stopColor="#6D28D9" stopOpacity={1}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+              <XAxis dataKey="hour" stroke={axisColor} tick={{ fill: axisColor, fontSize: 11 }} tickLine={false} axisLine={{ stroke: axisColor, strokeWidth: 1 }} dy={10} />
+              <YAxis stroke={axisColor} tick={{ fill: axisColor, fontSize: 11 }} tickLine={false} axisLine={false} />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }} />
+              <Bar dataKey="vehicles" fill="url(#colorHourly)" name="Vehicles Parked" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -319,7 +406,7 @@ const AdminDashboard = () => {
       {/* Parking Performance Table */}
       <div className="charts-section">
         <div className="chart-container full-width">
-          <h3>🏢 Parking Lot Performance</h3>
+          <h3><Building2 size={20} className="inline-icon" /> Parking Lot Performance</h3>
           <div className="table-container">
             <table className="performance-table">
               <thead>
@@ -369,7 +456,7 @@ const AdminDashboard = () => {
       {fineStats && (
         <div className="charts-section">
           <div className="stat-box">
-            <h3>📋 Fine Statistics</h3>
+            <h3><ClipboardList size={20} className="inline-icon" /> Fine Statistics</h3>
             <div className="stat-grid">
               <div className="stat-item">
                 <label>Total Fines Collected</label>
@@ -397,7 +484,7 @@ const AdminDashboard = () => {
       {/* Support Feedbacks Section */}
       <div className="charts-section">
         <div className="chart-container full-width">
-          <h3>💬 User Support & Feedbacks</h3>
+          <h3><MessageSquare size={20} className="inline-icon" /> User Support & Feedbacks</h3>
           <div className="table-container">
             <table className="performance-table">
               <thead>
@@ -422,8 +509,10 @@ const AdminDashboard = () => {
                     </td>
                     <td>{fb.subject}</td>
                     <td>
-                      <div className="rating-stars">
-                        {'★'.repeat(fb.rating)}{'☆'.repeat(5 - fb.rating)}
+                      <div className="rating-stars" style={{ display: 'flex', alignItems: 'center' }}>
+                        {[...Array(5)].map((_, i) => (
+                           <Star key={i} size={14} fill={i < fb.rating ? "currentColor" : "none"} color="#8B5CF6" />
+                        ))}
                       </div>
                     </td>
                     <td className="message-cell">{fb.message}</td>
@@ -433,6 +522,7 @@ const AdminDashboard = () => {
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       </div>
     </div>

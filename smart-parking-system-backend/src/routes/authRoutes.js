@@ -6,6 +6,7 @@ const { authMiddleware } = require('../middleware/authMiddleware');
 // Public routes
 router.post('/register', authController.registerUser);
 router.post('/login', authController.loginUser);
+router.post('/google', authController.googleLogin);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 

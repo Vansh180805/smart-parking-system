@@ -92,7 +92,7 @@ const seedData = async () => {
         console.log('🚀 Connected to MongoDB');
 
         let admin = await User.findOne({ role: 'admin' });
-        if (!admin) admin = await User.create({ name: 'System Admin', email: 'admin@system.com', password: 'password123', role: 'admin', isVerified: true });
+        if (!admin) admin = await User.create({ name: 'System Admin', email: 'admin@system.com', password: 'password123', phone: '0000000000', role: 'admin', isVerified: true });
 
         await ParkingLot.deleteMany({});
         await Slot.deleteMany({});

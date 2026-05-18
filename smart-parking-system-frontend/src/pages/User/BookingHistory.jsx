@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { bookingService } from '../../services/api';
+import { 
+    Clock, 
+    AlertTriangle, 
+    CheckCircle2, 
+    Copy, 
+    Smartphone, 
+    LogOut, 
+    FolderOpen, 
+    ArrowLeft,
+    Check
+} from 'lucide-react';
 import '../../styles/BookingHistory.css';
 
 const CountdownTimer = ({ endTime }) => {
@@ -13,39 +24,61 @@ const CountdownTimer = ({ endTime }) => {
             const diff = end - now;
 
             if (diff <= 0) {
-                setTimeLeft('EXPIRED (Overstaying)');
+                setTimeLeft('EXPIRED');
                 clearInterval(timer);
             } else {
                 const h = Math.floor(diff / 3600000);
                 const m = Math.floor((diff % 3600000) / 60000);
                 const s = Math.floor((diff % 60000) / 1000);
-                setTimeLeft(`${h}h ${m}m ${s}s`);
+                
+                const pad = (n) => n.toString().padStart(2, '0');
+                setTimeLeft(`${pad(h)}h ${pad(m)}m ${pad(s)}s`);
             }
         }, 1000);
         return () => clearInterval(timer);
     }, [endTime]);
 
-    const isExpired = timeLeft.includes('EXPIRED');
+    const isExpired = timeLeft === 'EXPIRED';
 
     return (
         <div style={{
-            marginTop: '15px',
-            background: isExpired ? '#fef2f2' : '#f0fdf4',
-            padding: '15px',
-            borderRadius: '12px',
-            border: `1px solid ${isExpired ? '#fecaca' : '#bbf7d0'}`,
-            textAlign: 'center'
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            background: isExpired ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+            padding: '10px 20px',
+            borderRadius: '16px',
+            border: `1px solid ${isExpired ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
+            textAlign: 'center',
+            minWidth: '140px',
+            height: '100%',
+            boxSizing: 'border-box'
         }}>
-            <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '5px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                {isExpired ? '⚠️ Time Overstayed' : '⏱️ Time Remaining'}
+            <div style={{ 
+                color: isExpired ? '#ef4444' : '#10b981', 
+                fontSize: '9.5px', 
+                marginBottom: '6px', 
+                fontWeight: '800', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.08em', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: '5px' 
+            }}>
+                {isExpired ? <><AlertTriangle size={12} /> Overstay</> : <><Clock size={12} /> Time Remaining</>}
             </div>
             <div style={{
-                color: isExpired ? '#dc2626' : '#16a34a',
-                fontSize: '1.5rem',
-                fontWeight: '900',
-                fontFamily: 'monospace'
+                color: isExpired ? '#ef4444' : '#10b981',
+                fontSize: '1.25rem',
+                fontWeight: '700',
+                letterSpacing: '0.5px'
             }}>
-                {timeLeft}
+                {timeLeft.split(' ').map((part, i) => (
+                    <span key={i} style={{ margin: '0 2px' }}>
+                        {part.replace(/[hms]/, '')}<span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{part.replace(/[0-9]/g, '')}</span>
+                    </span>
+                ))}
             </div>
         </div>
     );
@@ -112,63 +145,62 @@ const BookingHistory = () => {
             case 'completed': return 'badge-secondary';
             case 'cancelled': return 'badge-danger';
             case 'overdue': return 'badge-warning';
+            case 'pending': return 'badge-warning';
             default: return 'badge-light';
         }
     };
 
     return (
         <div className="booking-history-page">
-            <div className="history-header">
-                <button className="back-btn" onClick={() => navigate('/home')}>← Back</button>
-                <h1>My Booking History</h1>
-                <p>Track all your parking reservations</p>
+            <div className="booking-history-header">
+                <div className="header-bg-glow" />
+                <div className="header-content">
+                    <div className="header-intro">
+                        <div className="header-eyebrow">
+                            <FolderOpen size={12} /> SMART PARKING PREMIUM
+                        </div>
+                        <h1>Booking History</h1>
+                        <p>Track all your parking reservations and activities.</p>
+                    </div>
+                </div>
             </div>
 
             <div className="history-container">
+                <button className="back-btn" onClick={() => navigate('/home')} style={{ marginBottom: '24px' }}>
+                    <ArrowLeft size={15} strokeWidth={1.5} /> Back to Home
+                </button>
                 {loading ? (
-                    <div className="loading-state">
+                    <div className="loading-state" style={{ textAlign: 'center', padding: '40px' }}>
                         <div className="spinner"></div>
-                        <p>Fetching your history...</p>
+                        <p style={{ color: '#a1a1aa' }}>Fetching your history...</p>
                     </div>
                 ) : error ? (
-                    <div className="error-state">
+                    <div className="error-state" style={{ textAlign: 'center', padding: '40px', background: 'rgba(239,68,68,0.1)', borderRadius: '16px', color: '#ef4444' }}>
                         <p>{error}</p>
-                        <button onClick={fetchBookings}>Retry</button>
+                        <button onClick={fetchBookings} style={{ padding: '8px 16px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', marginTop: '10px' }}>Retry</button>
                     </div>
                 ) : bookings.length === 0 ? (
                     <div className="empty-state">
-                        <div className="empty-icon">📂</div>
+                        <FolderOpen size={56} strokeWidth={1} className="empty-icon" />
                         <h3>No Bookings Found</h3>
                         <p>You haven't made any parking reservations yet.</p>
-                        <button onClick={() => navigate('/bookings')}>Book Now</button>
+                        <button className="pay-btn" onClick={() => navigate('/bookings')} style={{ marginTop: '10px' }}>Book Now</button>
                     </div>
                 ) : (
-                    <div className="bookings-list">
+                    <div className="bookings-list timeline">
                         {bookings.map((booking) => (
                             <div key={booking._id} className="booking-item-card">
                                 <div className="booking-item-header">
                                     <div className="parking-info">
                                         <h3>{booking.parkingId?.name}</h3>
                                         <p>{booking.parkingId?.address}</p>
-                                        <div style={{
-                                            marginTop: '8px',
-                                            fontSize: '0.8rem',
-                                            background: '#f1f5f9',
-                                            padding: '4px 10px',
-                                            borderRadius: '6px',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            color: '#64748b',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s',
-                                            border: copiedId === booking.bookingId ? '1px solid #10b981' : '1px solid transparent'
-                                        }}
+                                        <div 
+                                            className="id-pill"
                                             onClick={() => handleCopyId(booking.bookingId)}
                                             title="Click to copy ID"
                                         >
                                             <strong>ID: {booking.bookingId}</strong>
-                                            <span>{copiedId === booking.bookingId ? '✅ Copied!' : '📋'}</span>
+                                            <span>{copiedId === booking.bookingId ? <Check size={14} color="#10b981" /> : <Copy size={14} />}</span>
                                         </div>
                                     </div>
                                     <span className={`status-badge ${getStatusBadgeClass(booking.bookingStatus)}`}>
@@ -215,20 +247,8 @@ const BookingHistory = () => {
                                         <button
                                             className="qr-btn"
                                             onClick={() => setActiveQR(booking.qrCode)}
-                                            style={{
-                                                backgroundColor: '#6366f1',
-                                                color: 'white',
-                                                padding: '10px 20px',
-                                                border: 'none',
-                                                borderRadius: '8px',
-                                                cursor: 'pointer',
-                                                fontWeight: '600',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '8px'
-                                            }}
                                         >
-                                            📱 View QR Code
+                                            <Smartphone size={15} strokeWidth={1.5} /> View QR Code
                                         </button>
                                     )}
                                     {booking.bookingStatus === 'parked' && (
@@ -239,25 +259,25 @@ const BookingHistory = () => {
                                             className="exit-btn"
                                             onClick={() => handleExit(booking._id)}
                                             style={{
-                                                marginTop: '20px',
-                                                padding: '14px',
+                                                flex: 1,
+                                                padding: '12px 24px',
                                                 background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                                                 color: 'white',
                                                 border: 'none',
-                                                borderRadius: '12px',
-                                                fontWeight: '800',
-                                                fontSize: '1rem',
+                                                borderRadius: '16px',
+                                                fontWeight: '700',
+                                                fontSize: '13.5px',
                                                 cursor: 'pointer',
                                                 boxShadow: '0 6px 15px rgba(220, 38, 38, 0.3)',
-                                                width: '100%',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
                                                 gap: '10px',
-                                                transition: 'transform 0.2s'
+                                                transition: 'transform 0.2s',
+                                                height: '100%'
                                             }}
                                         >
-                                            🚪 EXIT & LEAVE SPOT
+                                            <LogOut size={16} strokeWidth={2} /> EXIT & LEAVE SPOT
                                         </button>
                                     )}
                                 </div>
@@ -290,27 +310,34 @@ const BookingHistory = () => {
                         className="qr-modal-content"
                         onClick={(e) => e.stopPropagation()}
                         style={{
-                            background: 'white',
+                            background: '#1a1a2e',
                             padding: '30px',
                             borderRadius: '24px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
                             textAlign: 'center',
                             maxWidth: '400px',
                             width: '90%',
-                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                            border: '1px solid rgba(255,255,255,0.1)'
                         }}
                     >
-                        <h2 style={{ color: '#111827', marginBottom: '20px' }}>Entry QR Code</h2>
+                        <h2 style={{ color: '#fff', marginBottom: '20px', fontSize: '20px' }}>Entry QR Code</h2>
                         <img
                             src={activeQR}
                             alt="Booking QR"
                             style={{
                                 width: '250px',
                                 height: '250px',
-                                border: '1px solid #eee',
-                                borderRadius: '12px'
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                borderRadius: '12px',
+                                background: 'white',
+                                padding: '10px',
+                                margin: '0 auto'
                             }}
                         />
-                        <p style={{ color: '#6b7280', marginTop: '20px', fontSize: '0.9rem' }}>
+                        <p style={{ color: '#a1a1aa', marginTop: '20px', fontSize: '0.9rem' }}>
                             Show this QR code to the staff at the parking entrance.
                         </p>
                         <button
@@ -319,7 +346,7 @@ const BookingHistory = () => {
                                 marginTop: '25px',
                                 width: '100%',
                                 padding: '12px',
-                                background: '#111827',
+                                background: '#8B5CF6',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '12px',

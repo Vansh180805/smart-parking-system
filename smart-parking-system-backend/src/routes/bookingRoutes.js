@@ -21,6 +21,9 @@ router.post('/:bookingId/pay-qr', bookingController.paymentQR);
 // Get user bookings
 router.get('/my-bookings', bookingController.getUserBookings);
 
+// Get single booking by ID
+router.get('/:bookingId', bookingController.getBookingById);
+
 // Cancel booking
 router.post('/:bookingId/cancel', bookingController.cancelBooking);
 

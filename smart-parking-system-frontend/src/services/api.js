@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Fallback to localhost which resolves IPv6/IPv4 correctly on Windows
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -25,6 +26,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Check for Connection Refused / Network Error
+    if (error.code === 'ERR_NETWORK' || !error.response) {
+      console.error("🌐 Backend Connection Failed. Is the server running on port 5000?");
+      error.message = "Unable to connect to the server. Please check if the backend is running.";
+    }
+
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -70,7 +77,9 @@ export const bookingService = {
   cancelBooking: (bookingId) => api.post(`/bookings/${bookingId}/cancel`),
   checkOverstay: (bookingId) => api.get(`/bookings/${bookingId}/check-overstay`),
   exitParking: (bookingId) => api.post(`/bookings/${bookingId}/exit`),
-  createPaymentOrder: (bookingId, type = 'BOOKING') => api.post('/payments/create-order', { bookingId, type }),
+  getBookingById: (bookingId) => api.get(`/bookings/${bookingId}`),
+  createPaymentOrder: (bookingId, type = 'BOOKING', simulate = false) => 
+    api.post('/payments/create-order', { bookingId, type, simulate }),
   verifyPayment: (paymentData) => api.post('/payments/verify', paymentData),
 };
 

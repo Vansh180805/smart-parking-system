@@ -1,12 +1,11 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 
 dotenv.config();
 
 const adminEmail = 'vanshkaushik380@gmail.com';
-const adminPasswordRaw = 'admin123'; // Standard password for them to use
+const adminPasswordRaw = 'vansh@0993'; // Your original password
 const adminPhone = '9876543210';
 const adminName = 'Vansh Kaushik';
 
@@ -18,14 +17,11 @@ const forceRegisterAdmin = async () => {
         // Check if user exists
         let user = await User.findOne({ email: adminEmail });
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(adminPasswordRaw, salt);
-
         if (user) {
             console.log('User exists. Updating to Admin...');
             user.role = 'admin';
             user.isVerified = true;
-            user.password = hashedPassword;
+            user.password = adminPasswordRaw;  // Plain password - let pre-save hook hash it
             user.otp = undefined;
             user.otpExpires = undefined;
             await user.save();
@@ -36,7 +32,7 @@ const forceRegisterAdmin = async () => {
                 name: adminName,
                 email: adminEmail,
                 phone: adminPhone,
-                password: hashedPassword,
+                password: adminPasswordRaw,  // Plain password - let pre-save hook hash it
                 role: 'admin',
                 isVerified: true,
             });
