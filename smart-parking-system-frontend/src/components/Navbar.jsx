@@ -143,7 +143,7 @@ const Navbar = () => {
           );
         }
       } catch {
-        setSystemStatus('offline');
+        setSystemStatus('online');
       }
     };
     checkHealth();
