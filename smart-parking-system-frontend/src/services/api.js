@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Fallback to localhost which resolves IPv6/IPv4 correctly on Windows
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://smart-parking-system-backend-w5kn.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
