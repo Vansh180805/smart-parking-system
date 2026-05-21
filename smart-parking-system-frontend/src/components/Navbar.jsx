@@ -133,8 +133,9 @@ const Navbar = () => {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-        const BASE_URL = API_URL.replace('/api', '');
+        const BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  'https://smart-parking-system-backend-w5kn.onrender.com';
         const response = await axios.get(BASE_URL, { timeout: 3000 });
         if (response.data.success) {
           setSystemStatus(
