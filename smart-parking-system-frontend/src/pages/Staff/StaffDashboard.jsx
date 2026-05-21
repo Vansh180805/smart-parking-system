@@ -6,7 +6,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { 
   ShieldCheck, Check, X, AlertTriangle, ClipboardList, 
   ParkingCircle, ScanLine, Rocket, LogOut, Info,
-  PackageOpen, Bike, Truck, Car, Tractor, LayoutDashboard
+  PackageOpen, Bike, Truck, Car, LayoutDashboard
 } from 'lucide-react';
 import '../../styles/StaffDashboard.css';
 
@@ -456,7 +456,7 @@ const StaffDashboard = () => {
                     <div className="entry-header">
                       <div className="vehicle-badge">
                         {entry.vehicleType === 'twoWheeler' && <Bike size={18} />}
-                        {entry.vehicleType === 'threeWheeler' && <Tractor size={18} />}
+                        {entry.vehicleType === 'threeWheeler' && <Car size={18} />}
                         {entry.vehicleType === 'fourWheeler' && <Car size={18} />}
                         {entry.vehicleType === 'heavyVehicle' && <Truck size={18} />}
                       </div>
@@ -514,7 +514,7 @@ const StaffDashboard = () => {
                     <div className="parked-header">
                       <div className="vehicle-badge">
                         {vehicle.vehicleType === 'twoWheeler' && <Bike size={18} />}
-                        {vehicle.vehicleType === 'threeWheeler' && <Tractor size={18} />}
+                        {vehicle.vehicleType === 'threeWheeler' && <Car size={18} />}
                         {vehicle.vehicleType === 'fourWheeler' && <Car size={18} />}
                         {vehicle.vehicleType === 'heavyVehicle' && <Truck size={18} />}
                       </div>

@@ -3,7 +3,6 @@ import {
   Bike,
   Car,
   Truck,
-  Tractor,
   CheckCircle2,
   XCircle,
   Lock,
@@ -34,7 +33,7 @@ const SlotGrid = ({ slots, onSlotSelect, vehicleType, selectedSlot }) => {
 
   const vehicleTypeIcons = {
     twoWheeler:   <Bike size={14} strokeWidth={1.5} />,
-    threeWheeler: <Tractor size={14} strokeWidth={1.5} />,
+    threeWheeler: <Car size={14} strokeWidth={1.5} />,
     fourWheeler:  <Car size={14} strokeWidth={1.5} />,
     heavyVehicle: <Truck size={14} strokeWidth={1.5} />,
   };
