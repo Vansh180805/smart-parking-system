@@ -1,0 +1,4 @@
+Total Users: 3
+- ID: 69f470fdf00ac0e149971cdc, Name: System Admin, Email: admin@system.com, Phone: 0000000000, Role: admin, Verified: true
+- ID: 69f8dab5ceec891de653da47, Name: Vansh Kaushik, Email: vanshkaushik380@gmail.com, Phone: G-91271927, Role: admin, Verified: true
+- ID: 69f8e213ceec891de653db03, Name: VANSH KAUSHIK, Email: vansh0993.be23@chitkara.edu.in, Phone: G-94117288, Role: user, Verified: true
