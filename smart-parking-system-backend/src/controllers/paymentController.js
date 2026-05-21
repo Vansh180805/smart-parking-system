@@ -43,10 +43,11 @@ if (hasValidFormat) {
 // @access  Private
 exports.createOrder = async (req, res) => {
     try {
-        const { bookingId } = req.body;
+        const { bookingId, type } = req.body; // type: 'BOOKING' or 'FINE'
 
         console.log("\n💳 === CREATE ORDER REQUEST ===");
         console.log("📥 BOOKING ID:", bookingId);
+        console.log("📥 TYPE:", type);
 
         const booking = await Booking.findById(bookingId);
 
@@ -57,7 +58,15 @@ exports.createOrder = async (req, res) => {
             });
         }
 
-        const amount = Number(booking.bookingAmount);
+        // Use fineAmount if type is FINE, otherwise use bookingAmount
+        let amount;
+        if (type === 'FINE') {
+            amount = Number(booking.fineAmount);
+            console.log("💰 FINE PAYMENT - Using fineAmount:", amount);
+        } else {
+            amount = Number(booking.bookingAmount);
+            console.log("💰 BOOKING PAYMENT - Using bookingAmount:", amount);
+        }
 
         if (!amount || isNaN(amount)) {
             return res.status(400).json({

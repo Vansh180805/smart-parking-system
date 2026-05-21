@@ -15,6 +15,8 @@ import {
   Sparkles,
   ArrowRight,
   CalendarCheck,
+  X,
+  Clock,
 } from 'lucide-react';
 import '../../styles/UserHome.css';
 
@@ -28,8 +30,11 @@ const UserHome = () => {
     completedBookings: 0,
   });
   const [recentBookings, setRecentBookings] = useState([]);
+  const [allBookings, setAllBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState(null);
 
   useEffect(() => {
     if (!user) {
@@ -46,7 +51,8 @@ const UserHome = () => {
   const fetchUserStats = async () => {
     try {
       setLoading(true);
-      const response = await bookingService.getUserBookings(undefined, 1, 10);
+      // Fetch all bookings (not just first 10)
+      const response = await bookingService.getUserBookings(undefined, 1, 1000);
 
       if (response.data.success && response.data.data?.bookings) {
         const bookings = response.data.data.bookings;
@@ -59,7 +65,12 @@ const UserHome = () => {
           b.bookingStatus === 'completed'
         ).length;
 
-        setStats({ totalBookings: response.data.total || bookings.length, activeBookings: activeCount, completedBookings: completedCount });
+        setStats({
+          totalBookings: response.data.total || bookings.length,
+          activeBookings: activeCount,
+          completedBookings: completedCount
+        });
+        setAllBookings(bookings);
         setRecentBookings(bookings.slice(0, 2));
       }
     } catch (err) {
@@ -71,6 +82,41 @@ const UserHome = () => {
   };
 
   const firstName = user?.name?.split(' ')[0];
+
+  const handleStatCardClick = (filterType) => {
+    setSelectedFilter(filterType);
+    setShowModal(true);
+  };
+
+  const getFilteredBookings = () => {
+    switch (selectedFilter) {
+      case 'total':
+        return allBookings;
+      case 'active':
+        return allBookings.filter(b =>
+          b.bookingStatus === 'pending' ||
+          b.bookingStatus === 'confirmed' ||
+          b.bookingStatus === 'parked'
+        );
+      case 'completed':
+        return allBookings.filter(b => b.bookingStatus === 'completed');
+      default:
+        return [];
+    }
+  };
+
+  const getFilterTitle = () => {
+    switch (selectedFilter) {
+      case 'total':
+        return 'All Bookings';
+      case 'active':
+        return 'Active Bookings';
+      case 'completed':
+        return 'Completed Bookings';
+      default:
+        return 'Bookings';
+    }
+  };
 
   return (
     <div className="user-home">
@@ -127,7 +173,11 @@ const UserHome = () => {
             <div className="stats-error">{error}</div>
           ) : (
             <div className="stats-grid">
-              <div className="stat-card">
+              <button
+                className="stat-card clickable-stat"
+                onClick={() => handleStatCardClick('total')}
+                title="Click to view all bookings"
+              >
                 <div className="stat-icon-box neutral">
                   <BarChart3 size={20} strokeWidth={1.5} />
                 </div>
@@ -136,9 +186,13 @@ const UserHome = () => {
                   <h3 className="stat-value">{stats.totalBookings}</h3>
                 </div>
                 <div className="stat-border neutral" />
-              </div>
+              </button>
 
-              <div className="stat-card">
+              <button
+                className="stat-card clickable-stat"
+                onClick={() => handleStatCardClick('active')}
+                title="Click to view active bookings"
+              >
                 <div className="stat-icon-box blue">
                   <Zap size={20} strokeWidth={1.5} />
                 </div>
@@ -147,9 +201,13 @@ const UserHome = () => {
                   <h3 className="stat-value">{stats.activeBookings}</h3>
                 </div>
                 <div className="stat-border blue" />
-              </div>
+              </button>
 
-              <div className="stat-card">
+              <button
+                className="stat-card clickable-stat"
+                onClick={() => handleStatCardClick('completed')}
+                title="Click to view completed bookings"
+              >
                 <div className="stat-icon-box green">
                   <CheckCircle2 size={20} strokeWidth={1.5} />
                 </div>
@@ -158,7 +216,7 @@ const UserHome = () => {
                   <h3 className="stat-value">{stats.completedBookings}</h3>
                 </div>
                 <div className="stat-border green" />
-              </div>
+              </button>
             </div>
           )}
         </section>
@@ -270,9 +328,9 @@ const UserHome = () => {
             <div className="recent-bookings-list">
               {recentBookings.length > 0 ? (
                 recentBookings.map((booking) => (
-                  <div 
-                    key={booking._id} 
-                    className="recent-booking-card" 
+                  <div
+                    key={booking._id}
+                    className="recent-booking-card"
                     onClick={() => navigate('/bookings/history')}
                   >
                     <div className="rb-left">
@@ -326,6 +384,111 @@ const UserHome = () => {
           </section>
         )}
       </div>
+
+      {/* ── Bookings Modal ──────────────────────────────────── */}
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="bookings-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{getFilterTitle()}</h2>
+              <button
+                className="close-modal-btn"
+                onClick={() => setShowModal(false)}
+                title="Close"
+              >
+                <X size={24} strokeWidth={2} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {getFilteredBookings().length > 0 ? (
+                <div className="bookings-list">
+                  {getFilteredBookings().map((booking) => (
+                    <div key={booking._id} className="booking-detail-card">
+                      <div className="booking-card-header">
+                        <div className="booking-title">
+                          <h4>{booking.parkingId?.name || 'Parking Lot'}</h4>
+                          <p className="booking-id">ID: {booking.bookingId}</p>
+                        </div>
+                        <span className={`status-badge ${booking.bookingStatus}`}>
+                          {booking.bookingStatus?.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <div className="booking-card-body">
+                        <div className="booking-detail">
+                          <span className="detail-label">Location:</span>
+                          <span className="detail-value">{booking.parkingId?.address}</span>
+                        </div>
+                        <div className="booking-detail">
+                          <span className="detail-label">Vehicle:</span>
+                          <span className="detail-value">{booking.vehicleNumber}</span>
+                        </div>
+                        <div className="booking-detail">
+                          <span className="detail-label">Slot:</span>
+                          <span className="detail-value">{booking.slotId?.slotNumber || 'N/A'}</span>
+                        </div>
+                        <div className="booking-detail">
+                          <span className="detail-label">Start Time:</span>
+                          <span className="detail-value">
+                            {new Date(booking.startTime).toLocaleString('en-IN', {
+                              dateStyle: 'short',
+                              timeStyle: 'short'
+                            })}
+                          </span>
+                        </div>
+                        <div className="booking-detail">
+                          <span className="detail-label">End Time:</span>
+                          <span className="detail-value">
+                            {new Date(booking.endTime).toLocaleString('en-IN', {
+                              dateStyle: 'short',
+                              timeStyle: 'short'
+                            })}
+                          </span>
+                        </div>
+                        <div className="booking-detail">
+                          <span className="detail-label">Booking Amount:</span>
+                          <span className="detail-value amount">₹{booking.bookingAmount}</span>
+                        </div>
+                        {booking.fineAmount > 0 && (
+                          <>
+                            <div className="booking-detail">
+                              <span className="detail-label">Fine Amount:</span>
+                              <span className="detail-value amount">₹{booking.fineAmount}</span>
+                            </div>
+                            <div className="booking-detail warning">
+                              <Clock size={16} />
+                              <span className="fine-warning">Overstay Fine Applied</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="booking-card-footer">
+                        <button
+                          className="view-details-btn"
+                          onClick={() => {
+                            setShowModal(false);
+                            navigate('/bookings/history');
+                          }}
+                        >
+                          View Full Details
+                          <ArrowRight size={14} strokeWidth={1.5} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="modal-empty-state">
+                  <CalendarCheck size={48} strokeWidth={1.5} />
+                  <p>No {getFilterTitle().toLowerCase()} found</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

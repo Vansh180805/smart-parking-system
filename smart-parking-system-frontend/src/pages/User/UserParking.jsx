@@ -13,6 +13,11 @@ const VEHICLE_TYPES = [
   { value: 'heavyVehicle', label: 'Heavy Vehicle', icon: Truck },
 ];
 
+const toLocalISOString = (d) => {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 const UserParking = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -219,7 +224,7 @@ const UserParking = () => {
     const current = startTime ? new Date(startTime) : new Date();
     date.setHours(current.getHours());
     date.setMinutes(current.getMinutes());
-    setStartTime(date.toISOString().slice(0, 16));
+    setStartTime(toLocalISOString(date));
     setShowDatePicker(false);
   };
 
@@ -304,6 +309,11 @@ const UserParking = () => {
   const handleCreateBooking = async () => {
   if (!vehicleNumber || !startTime || !selectedSlot) {
     setError('Please complete booking form.');
+    return;
+  }
+
+  if (new Date(startTime) < new Date()) {
+    setError('Booking time cannot be in the past.');
     return;
   }
 
@@ -618,13 +628,13 @@ const UserParking = () => {
                               e.stopPropagation();
                               const d = new Date(startTime || new Date());
                               d.setMonth(d.getMonth() - 1);
-                              setStartTime(d.toISOString().slice(0, 16));
+                              setStartTime(toLocalISOString(d));
                             }} />
                             <ChevronDown size={14} className="nav-arrow" onClick={(e) => {
                               e.stopPropagation();
                               const d = new Date(startTime || new Date());
                               d.setMonth(d.getMonth() + 1);
-                              setStartTime(d.toISOString().slice(0, 16));
+                              setStartTime(toLocalISOString(d));
                             }} />
                           </div>
                         </div>
@@ -636,11 +646,22 @@ const UserParking = () => {
                         ))}
                         {generateCalendarDays().map((d, i) => {
                           const isSelected = startTime && new Date(startTime).toDateString() === d.date.toDateString();
+                          
+                          // Check if date is before today
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const dCopy = new Date(d.date);
+                          dCopy.setHours(0, 0, 0, 0);
+                          const isPast = dCopy < today;
+
                           return (
                             <div 
                               key={i} 
-                              className={`calendar-day ${d.month} ${isSelected ? 'selected' : ''}`}
-                              onClick={() => handleDateSelect(d.date)}
+                              className={`calendar-day ${d.month} ${isSelected ? 'selected' : ''} ${isPast ? 'disabled' : ''}`}
+                              onClick={() => {
+                                if (!isPast) handleDateSelect(d.date);
+                              }}
+                              style={isPast ? { opacity: 0.3, cursor: 'not-allowed', background: 'transparent' } : {}}
                             >
                               {d.day}
                             </div>
@@ -655,11 +676,17 @@ const UserParking = () => {
                             type="time" 
                             value={startTime ? new Date(startTime).toTimeString().slice(0, 5) : ''}
                             onChange={(e) => {
+                              if (!e.target.value) return;
                               const [h, m] = e.target.value.split(':');
+                              if (h === undefined || m === undefined) return;
+                              
                               const d = startTime ? new Date(startTime) : new Date();
-                              d.setHours(h);
-                              d.setMinutes(m);
-                              setStartTime(d.toISOString().slice(0, 16));
+                              d.setHours(parseInt(h, 10));
+                              d.setMinutes(parseInt(m, 10));
+                              
+                              if (!isNaN(d.getTime())) {
+                                setStartTime(toLocalISOString(d));
+                              }
                             }}
                           />
                         </div>

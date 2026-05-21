@@ -195,10 +195,12 @@ exports.createBooking = async (req, res) => {
     if (hours >= 1) {
       bookingAmount = Math.ceil(hours) * parking.hourlyRate;
     } else {
-      // For under 1 hour, calculate by minute (pro-rated)
-      const minutes = Math.ceil(diffMs / (1000 * 60));
-      const proRated = Math.ceil((parking.hourlyRate / 60) * minutes);
-      bookingAmount = Math.max(proRated, 10); // Minimum ₹10 charge
+      // For under 1 hour, calculate by minute (pro-rated) - precise to 2 decimals
+      const minutes = diffMs / (1000 * 60); // Don't ceil here for accuracy
+      // Calculate exact per-minute rate
+      bookingAmount = parseFloat(((parking.hourlyRate / 60) * minutes).toFixed(2));
+      // Ensure minimum ₹1 charge (no free bookings)
+      bookingAmount = Math.max(bookingAmount, 1);
     }
 
     // Create booking
@@ -289,7 +291,7 @@ exports.paymentQR = async (req, res) => {
       booking.paymentStatus = 'completed';
       booking.bookingStatus = 'confirmed';
     }
-    
+
     booking.transactionId = transactionId;
     booking.totalPaid = (booking.totalPaid || 0) + amountToPay;
     await booking.save();
@@ -499,8 +501,10 @@ exports.checkOverstay = async (req, res) => {
 
     if (now > endTime && !booking.fineAmount) {
       const parking = await ParkingLot.findById(booking.parkingId);
-      const hoursOverstay = Math.ceil((now - endTime) / (1000 * 60 * 60));
-      const fineAmount = hoursOverstay * parking.overStayFinePerHour;
+      // Calculate overstay in minutes: ₹2 per minute
+      const minutesOverstay = Math.ceil((now - endTime) / (1000 * 60));
+      // Fine = ₹2 per minute (5 min = ₹10, 10 min = ₹20, etc)
+      const fineAmount = minutesOverstay * 2;
 
       booking.fineAmount = fineAmount;
       booking.bookingStatus = 'overdue';

@@ -21,6 +21,7 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
+import logoImg from '../assets/custom_logo.png';
 import '../styles/Navbar.css';
 
 /* ── UserAction ─────────────────────────────────────────────
@@ -199,8 +200,8 @@ const Navbar = () => {
 
           {/* ── Logo ─────────────────────────────── */}
           <Link to="/" className="navbar-logo" onClick={() => setIsMenuOpen(false)}>
-            <div className="logo-icon-box">
-              <ParkingSquare size={17} color="#fff" strokeWidth={2} />
+            <div className="logo-icon-box" style={{ background: 'transparent', boxShadow: 'none' }}>
+              <img src={logoImg} alt="Smart Parking Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
             </div>
             <div className="logo-brand">
               <span className="logo-name">Smart Parking</span>

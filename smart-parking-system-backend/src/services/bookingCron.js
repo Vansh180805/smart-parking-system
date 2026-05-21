@@ -22,16 +22,17 @@ const startBookingCron = () => {
 
             for (const booking of overdueBookings) {
                 const diffMs = now - booking.endTime;
-                const extraHours = Math.ceil(diffMs / (1000 * 60 * 60));
+                // Calculate overstay in minutes: ₹2 per minute
+                const extraMinutes = Math.ceil(diffMs / (1000 * 60));
 
-                if (extraHours > 0) {
-                    const hourlyRate = booking.parkingId?.hourlyRate || 50;
-                    const fine = extraHours * hourlyRate * 1.5;
+                if (extraMinutes > 0) {
+                    // Fine = ₹2 per minute (5 min = ₹10, 10 min = ₹20, etc)
+                    const fine = extraMinutes * 2;
 
                     booking.fineAmount = fine;
                     booking.bookingStatus = 'overdue';
                     await booking.save();
-                    console.log(`📑 Updated booking ${booking.bookingId} with fine: ₹${fine}`);
+                    console.log(`📑 Updated booking ${booking.bookingId} with fine: ₹${fine} (${extraMinutes} mins overstay)`);
                 }
             }
 
