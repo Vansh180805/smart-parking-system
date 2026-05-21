@@ -17,11 +17,16 @@ connectDB();
 
 // ✅ SIMPLE CORS (BEST FOR DEVELOPMENT)
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3002', 'http://127.0.0.1:3002', process.env.FRONTEND_URL], // frontend URL
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3002',
+    'http://127.0.0.1:3002',
+    'https://smart-parking-system-3lne.vercel.app'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['x-rtb-fingerprint-id', 'request-id'] // 🔥 FIX
+  exposedHeaders: ['x-rtb-fingerprint-id', 'request-id']
 }));
 
 app.use((req, res, next) => {
