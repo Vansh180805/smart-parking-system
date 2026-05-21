@@ -2,6 +2,9 @@
   "name": "smart-parking-system-frontend",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "18.x"
+  },
   "dependencies": {
     "@react-oauth/google": "^0.13.5",
     "@testing-library/dom": "^10.4.1",
