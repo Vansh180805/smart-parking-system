@@ -20,9 +20,9 @@ import { adminService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { 
-  LayoutDashboard, ShieldAlert, Moon, Sun, RefreshCw, LogOut, 
+  LayoutDashboard, ShieldAlert,  RefreshCw, LogOut, 
   Car, CheckCircle, DollarSign, AlertTriangle, MapPin, ParkingCircle, 
-  PieChart as PieChartIcon, TrendingUp, CalendarDays, Clock, 
+   TrendingUp, CalendarDays, Clock, 
   Building2, ClipboardList, MessageSquare, Star
 } from 'lucide-react';
 import '../../styles/AdminDashboard.css';
@@ -30,7 +30,7 @@ import '../../styles/AdminDashboard.css';
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const [summary, setSummary] = useState(null);
   const [vehicleStats, setVehicleStats] = useState([]);
 

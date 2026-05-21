@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import axios from 'axios';
 import {
-  ParkingSquare,
   MapPin,
   Home,
   CalendarDays,
@@ -18,7 +17,6 @@ import {
   ChevronDown,
   LogOut,
   AlertTriangle,
-  Wifi,
   WifiOff,
 } from 'lucide-react';
 import logoImg from '../assets/custom_logo.png';

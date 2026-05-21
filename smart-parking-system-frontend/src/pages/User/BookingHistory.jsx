@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { bookingService } from '../../services/api';
 import { 
     Clock, 
-    AlertTriangle, 
-    CheckCircle2, 
+    AlertTriangle,  
     Copy, 
     Smartphone, 
     LogOut, 
